@@ -1,0 +1,225 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id         Int      @id @default(autoincrement())
+  username   String   @unique
+  password   String
+  role       String // admin, perawat, pasien, keluarga
+  device_id  String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  pasien     Pasien?
+  perawat    Perawat?
+  keluarga   Keluarga?
+  notifikasi Notifikasi[]
+  keluhan    KeluhanKlinis[] @relation("InputOlehUser")
+}
+
+model Pasien {
+  id                  Int      @id @default(autoincrement())
+  user_id             Int      @unique
+  nama                String
+  umur                Int?
+  jenis_kelamin       String?
+  pekerjaan           String?
+  pendidikan_terakhir String?
+  lama_menderita_ht   String?
+  alamat              String?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  user           Users                @relation(fields: [user_id], references: [id])
+  keluarga       Keluarga[]
+  perawat_pasien PerawatPasien[]
+  obat_pasien    ObatPasien[]
+  tekanan_darah  TekananDarah[]
+  log_konsumsi   LogKonsumsiMakanan[]
+  keluhan_klinis KeluhanKlinis[]
+  jadwal_kontrol JadwalKontrol[]
+}
+
+model Perawat {
+  id            Int      @id @default(autoincrement())
+  user_id       Int      @unique
+  nama          String
+  umur          Int?
+  jenis_kelamin String?
+  no_wa         String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  user           Users           @relation(fields: [user_id], references: [id])
+  perawat_pasien PerawatPasien[]
+}
+
+model Keluarga {
+  id         Int      @id @default(autoincrement())
+  user_id    Int      @unique
+  pasien_id  Int
+  nama       String
+  hubungan   String? // Suami, Istri, Anak, Lainnya
+  pendidikan String?
+  pekerjaan  String?
+  umur       Int?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user   Users  @relation(fields: [user_id], references: [id])
+  pasien Pasien @relation(fields: [pasien_id], references: [id])
+}
+
+model PerawatPasien {
+  id         Int      @id @default(autoincrement())
+  perawat_id Int
+  pasien_id  Int
+  created_at DateTime @default(now())
+
+  perawat Perawat @relation(fields: [perawat_id], references: [id])
+  pasien  Pasien  @relation(fields: [pasien_id], references: [id])
+}
+
+model MasterObat {
+  id         Int      @id @default(autoincrement())
+  nama_obat  String
+  dosis      String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  obat_pasien ObatPasien[]
+}
+
+model ObatPasien {
+  id             Int      @id @default(autoincrement())
+  pasien_id      Int
+  master_obat_id Int
+  jumlah_stok    Int
+  kategori_waktu String // Pagi, Siang, Malam
+  dosis          String?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  pasien        Pasien             @relation(fields: [pasien_id], references: [id])
+  master_obat   MasterObat         @relation(fields: [master_obat_id], references: [id])
+  log_kepatuhan LogKepatuhanObat[]
+}
+
+model LogKepatuhanObat {
+  id             Int      @id @default(autoincrement())
+  obat_pasien_id Int
+  pasien_id      Int
+  tanggal        DateTime @db.Date
+  kategori_waktu String
+  status         String // diminum, tidak_diminum, belum_dikonfirmasi
+  alasan         String?
+  skor           Int?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  obat_pasien ObatPasien @relation(fields: [obat_pasien_id], references: [id])
+}
+
+model TekananDarah {
+  id           Int      @id @default(autoincrement())
+  pasien_id    Int
+  tanggal      DateTime @db.Date
+  sistolik     Int
+  diastolik    Int
+  klasifikasi  String? // Normal, Pre-HT, HT Grade 1, HT Grade 2, Krisis HT
+  is_emergency Boolean  @default(false)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  pasien Pasien @relation(fields: [pasien_id], references: [id])
+}
+
+model MasterDietDash {
+  id             Int      @id @default(autoincrement())
+  nama_makanan   String
+  foto           String?
+  kandungan_gizi String?
+  resep_makanan  String?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  log_konsumsi LogKonsumsiMakanan[]
+}
+
+model LogKonsumsiMakanan {
+  id             Int      @id @default(autoincrement())
+  pasien_id      Int
+  master_diet_id Int?
+  nama_makanan   String?
+  kategori_makan String // Pagi, Siang, Malam
+  foto           String?
+  tanggal        DateTime @db.Date
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  pasien      Pasien          @relation(fields: [pasien_id], references: [id])
+  master_diet MasterDietDash? @relation(fields: [master_diet_id], references: [id])
+}
+
+model KeluhanKlinis {
+  id                 Int      @id @default(autoincrement())
+  pasien_id          Int
+  input_oleh_role    String // pasien, keluarga, perawat
+  input_oleh_user_id Int
+  tanggal            DateTime @db.Date
+  keluhan            String
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  pasien     Pasien @relation(fields: [pasien_id], references: [id])
+  input_oleh Users  @relation("InputOlehUser", fields: [input_oleh_user_id], references: [id])
+}
+
+model JadwalKontrol {
+  id            Int      @id @default(autoincrement())
+  pasien_id     Int
+  tanggal       DateTime @db.Date
+  jam           DateTime @db.Time
+  lokasi_faskes String?
+  nama_dokter   String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  pasien Pasien @relation(fields: [pasien_id], references: [id])
+}
+
+model MasterEdukasi {
+  id         Int      @id @default(autoincrement())
+  judul      String
+  kategori   String // Video, Materi
+  konten     String?
+  topik      String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Notifikasi {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  judul      String?
+  pesan      String?
+  tipe       String? // alarm_obat, stok_menipis, td_kritis, pengingat_kontrol, keluhan_baru
+  is_read    Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  user Users @relation(fields: [user_id], references: [id])
+}
+
+model BadgeMotivasi {
+  id         Int      @id @default(autoincrement())
+  judul      String
+  deskripsi  String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
