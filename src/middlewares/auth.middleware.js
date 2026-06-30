@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const jwtConfig = require("../config/jwt");
 const { error } = require("../utils/response");
+const { isTokenBlacklisted } = require("../modules/auth/auth.service");
 
 const authMiddleware = (req, res, next) => {
   const authHeader = req.headers["authorization"];
@@ -14,12 +15,21 @@ const authMiddleware = (req, res, next) => {
     );
   }
 
+  // Cek apakah token sudah di-blacklist (logout)
+  if (isTokenBlacklisted(token)) {
+    return error(res, "Token sudah tidak valid. Silakan login kembali.", 401);
+  }
+
   try {
     const decoded = jwt.verify(token, jwtConfig.secret);
     req.user = decoded;
+    req.token = token; // simpan token untuk keperluan logout
     next();
   } catch (err) {
-    return error(res, "Token tidak valid atau sudah expired.", 401);
+    if (err.name === "TokenExpiredError") {
+      return error(res, "Token sudah expired. Silakan login kembali.", 401);
+    }
+    return error(res, "Token tidak valid.", 401);
   }
 };
 

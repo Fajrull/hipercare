@@ -1,4 +1,4 @@
-const { error } = require('../utils/response');
+const { error } = require("../utils/response");
 
 /**
  * Middleware untuk membatasi akses berdasarkan role
@@ -7,11 +7,15 @@ const { error } = require('../utils/response');
 const roleMiddleware = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {
-      return error(res, 'Unauthorized', 401);
+      return error(res, "Unauthorized", 401);
     }
 
     if (!roles.includes(req.user.role)) {
-      return error(res, `Akses ditolak. Hanya role [${roles.join(', ')}] yang diizinkan.`, 403);
+      return error(
+        res,
+        `Akses ditolak. Hanya role [${roles.join(", ")}] yang diizinkan.`,
+        403,
+      );
     }
 
     next();
