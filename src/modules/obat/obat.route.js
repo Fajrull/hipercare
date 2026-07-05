@@ -1,23 +1,49 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const authMiddleware = require('../../middlewares/auth.middleware');
-const roleMiddleware = require('../../middlewares/role.middleware');
+const obatController = require("./obat.controller");
+const authMiddleware = require("../../middlewares/auth.middleware");
+const roleMiddleware = require("../../middlewares/role.middleware");
+
+// =============================================
+// MASTER OBAT (OBAT-01)
+// =============================================
 
 /**
  * @swagger
  * /api/obat/master:
  *   get:
- *     summary: Ambil semua master data obat
+ *     summary: Ambil semua master obat
+ *     description: Diakses semua role untuk keperluan select obat
  *     tags: [Obat]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Daftar master obat
+ *         description: Daftar master obat berhasil diambil
  */
-router.get('/master', authMiddleware, (req, res) => {
-  res.json({ status: true, message: 'Master obat - coming soon', data: null });
-});
+router.get("/master", authMiddleware, obatController.getAllMasterObat);
+
+/**
+ * @swagger
+ * /api/obat/master/{id}:
+ *   get:
+ *     summary: Detail master obat
+ *     tags: [Obat]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Detail master obat
+ *       404:
+ *         description: Master obat tidak ditemukan
+ */
+router.get("/master/:id", authMiddleware, obatController.getMasterObatById);
 
 /**
  * @swagger
@@ -47,9 +73,12 @@ router.get('/master', authMiddleware, (req, res) => {
  *       201:
  *         description: Master obat berhasil ditambahkan
  */
-router.post('/master', authMiddleware, roleMiddleware('admin', 'perawat'), (req, res) => {
-  res.json({ status: true, message: 'Tambah master obat - coming soon', data: null });
-});
+router.post(
+  "/master",
+  authMiddleware,
+  roleMiddleware("admin", "perawat"),
+  obatController.createMasterObat,
+);
 
 /**
  * @swagger
@@ -69,15 +98,19 @@ router.post('/master', authMiddleware, roleMiddleware('admin', 'perawat'), (req,
  *       200:
  *         description: Master obat berhasil diupdate
  */
-router.put('/master/:id', authMiddleware, roleMiddleware('admin', 'perawat'), (req, res) => {
-  res.json({ status: true, message: 'Update master obat - coming soon', data: null });
-});
+router.put(
+  "/master/:id",
+  authMiddleware,
+  roleMiddleware("admin", "perawat"),
+  obatController.updateMasterObat,
+);
 
 /**
  * @swagger
  * /api/obat/master/{id}:
  *   delete:
  *     summary: Hapus master obat
+ *     description: Tidak bisa dihapus jika masih digunakan oleh pasien
  *     tags: [Obat]
  *     security:
  *       - bearerAuth: []
@@ -90,16 +123,28 @@ router.put('/master/:id', authMiddleware, roleMiddleware('admin', 'perawat'), (r
  *     responses:
  *       200:
  *         description: Master obat berhasil dihapus
+ *       400:
+ *         description: Obat masih digunakan pasien
  */
-router.delete('/master/:id', authMiddleware, roleMiddleware('admin', 'perawat'), (req, res) => {
-  res.json({ status: true, message: 'Hapus master obat - coming soon', data: null });
-});
+router.delete(
+  "/master/:id",
+  authMiddleware,
+  roleMiddleware("admin", "perawat"),
+  obatController.deleteMasterObat,
+);
+
+// =============================================
+// OBAT PASIEN (OBAT-02 s/d OBAT-05)
+// =============================================
 
 /**
  * @swagger
  * /api/obat/pasien/{pasienId}:
  *   get:
- *     summary: Ambil daftar obat pasien
+ *     summary: Daftar obat pasien
+ *     description: >
+ *       Menampilkan semua obat aktif pasien beserta flag stok_menipis
+ *       jika stok <= 3 tablet (H-3 sebelum habis)
  *     tags: [Obat Pasien]
  *     security:
  *       - bearerAuth: []
@@ -111,18 +156,18 @@ router.delete('/master/:id', authMiddleware, roleMiddleware('admin', 'perawat'),
  *           type: integer
  *     responses:
  *       200:
- *         description: Daftar obat pasien
+ *         description: Daftar obat pasien berhasil diambil
  */
-router.get('/pasien/:pasienId', authMiddleware, (req, res) => {
-  res.json({ status: true, message: 'Obat pasien - coming soon', data: null });
-});
+router.get("/pasien/:pasienId", authMiddleware, obatController.getObatPasien);
 
 /**
  * @swagger
  * /api/obat/pasien/{pasienId}:
  *   post:
  *     summary: Tambah obat untuk pasien
- *     description: Pasien memilih dari master obat dan set jadwal minum
+ *     description: >
+ *       Pasien memilih obat dari master obat kemudian set stok dan jadwal minum.
+ *       Obat yang sama tidak bisa didaftarkan 2x untuk waktu yang sama.
  *     tags: [Obat Pasien]
  *     security:
  *       - bearerAuth: []
@@ -145,6 +190,7 @@ router.get('/pasien/:pasienId', authMiddleware, (req, res) => {
  *             properties:
  *               master_obat_id:
  *                 type: integer
+ *                 example: 1
  *               jumlah_stok:
  *                 type: integer
  *                 example: 30
@@ -157,17 +203,91 @@ router.get('/pasien/:pasienId', authMiddleware, (req, res) => {
  *     responses:
  *       201:
  *         description: Obat pasien berhasil ditambahkan
+ *       400:
+ *         description: Validasi gagal atau obat sudah terdaftar
  */
-router.post('/pasien/:pasienId', authMiddleware, roleMiddleware('pasien'), (req, res) => {
-  res.json({ status: true, message: 'Tambah obat pasien - coming soon', data: null });
-});
+router.post(
+  "/pasien/:pasienId",
+  authMiddleware,
+  roleMiddleware("pasien"),
+  obatController.tambahObatPasien,
+);
 
 /**
  * @swagger
- * /api/obat/kepatuhan/{pasienId}:
+ * /api/obat/pasien/{pasienId}/{obatId}:
+ *   put:
+ *     summary: Update obat pasien
+ *     description: Edit stok, dosis, atau waktu minum
+ *     tags: [Obat Pasien]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: pasienId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: obatId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Obat pasien berhasil diupdate
+ */
+router.put(
+  "/pasien/:pasienId/:obatId",
+  authMiddleware,
+  roleMiddleware("pasien"),
+  obatController.updateObatPasien,
+);
+
+/**
+ * @swagger
+ * /api/obat/pasien/{pasienId}/{obatId}:
+ *   delete:
+ *     summary: Hapus obat pasien
+ *     tags: [Obat Pasien]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: pasienId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: obatId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Obat pasien berhasil dihapus
+ */
+router.delete(
+  "/pasien/:pasienId/:obatId",
+  authMiddleware,
+  roleMiddleware("pasien"),
+  obatController.deleteObatPasien,
+);
+
+// =============================================
+// KEPATUHAN (OBAT-06, OBAT-07, OBAT-08, OBAT-09, OBAT-10)
+// =============================================
+
+/**
+ * @swagger
+ * /api/obat/kepatuhan/{pasienId}/konfirmasi:
  *   post:
- *     summary: Konfirmasi minum obat (input kepatuhan)
- *     description: Pasien konfirmasi status minum obat. Jika diminum, stok otomatis berkurang. Jika tidak diminum, wajib isi alasan.
+ *     summary: Konfirmasi minum obat
+ *     description: >
+ *       Pasien konfirmasi status minum obat per sesi.
+ *       - Jika **diminum**: skor = 1, stok otomatis berkurang 1.
+ *       - Jika **tidak_diminum**: skor = 0, field `alasan` wajib diisi.
+ *       - Response menyertakan flag `stok_menipis` jika stok <= 3.
  *     tags: [Obat Pasien]
  *     security:
  *       - bearerAuth: []
@@ -194,7 +314,7 @@ router.post('/pasien/:pasienId', authMiddleware, roleMiddleware('pasien'), (req,
  *               tanggal:
  *                 type: string
  *                 format: date
- *                 example: "2026-06-27"
+ *                 example: "2026-06-29"
  *               kategori_waktu:
  *                 type: string
  *                 enum: [Pagi, Siang, Malam]
@@ -206,17 +326,49 @@ router.post('/pasien/:pasienId', authMiddleware, roleMiddleware('pasien'), (req,
  *                 description: Wajib diisi jika status tidak_diminum
  *     responses:
  *       201:
- *         description: Kepatuhan berhasil dicatat
+ *         description: Konfirmasi berhasil dicatat
+ *       400:
+ *         description: Validasi gagal (alasan kosong, sudah dikonfirmasi, dll)
  */
-router.post('/kepatuhan/:pasienId', authMiddleware, roleMiddleware('pasien'), (req, res) => {
-  res.json({ status: true, message: 'Konfirmasi kepatuhan - coming soon', data: null });
-});
+router.post(
+  "/kepatuhan/:pasienId/konfirmasi",
+  authMiddleware,
+  roleMiddleware("pasien"),
+  obatController.konfirmasiMinum,
+);
 
 /**
  * @swagger
- * /api/obat/kepatuhan/{pasienId}:
+ * /api/obat/kepatuhan/{pasienId}/belum-dikonfirmasi:
  *   get:
- *     summary: Riwayat kepatuhan minum obat pasien
+ *     summary: Obat yang belum dikonfirmasi dari sesi sebelumnya
+ *     description: >
+ *       Menampilkan obat dari sesi sebelumnya yang belum mendapat konfirmasi,
+ *       agar pasien/keluarga mengetahui adanya kelalaian jadwal minum obat.
+ *     tags: [Obat Pasien]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: pasienId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Data obat belum dikonfirmasi berhasil diambil
+ */
+router.get(
+  "/kepatuhan/:pasienId/belum-dikonfirmasi",
+  authMiddleware,
+  obatController.getObatBelumDikonfirmasi,
+);
+
+/**
+ * @swagger
+ * /api/obat/kepatuhan/{pasienId}/riwayat:
+ *   get:
+ *     summary: Riwayat kepatuhan minum obat
  *     tags: [Obat Pasien]
  *     security:
  *       - bearerAuth: []
@@ -231,13 +383,48 @@ router.post('/kepatuhan/:pasienId', authMiddleware, roleMiddleware('pasien'), (r
  *         schema:
  *           type: string
  *           enum: [mingguan, bulanan]
- *         description: Filter periode grafik
+ *         description: Filter periode riwayat
  *     responses:
  *       200:
  *         description: Riwayat kepatuhan berhasil diambil
  */
-router.get('/kepatuhan/:pasienId', authMiddleware, (req, res) => {
-  res.json({ status: true, message: 'Riwayat kepatuhan - coming soon', data: null });
-});
+router.get(
+  "/kepatuhan/:pasienId/riwayat",
+  authMiddleware,
+  obatController.getRiwayatKepatuhan,
+);
+
+/**
+ * @swagger
+ * /api/obat/kepatuhan/{pasienId}/grafik:
+ *   get:
+ *     summary: Data grafik kepatuhan minum obat
+ *     description: >
+ *       Mengembalikan data grafik beserta summary persentase kepatuhan.
+ *       Filter `mingguan` group by hari, filter `bulanan` group by minggu.
+ *     tags: [Obat Pasien]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: pasienId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: filter
+ *         schema:
+ *           type: string
+ *           enum: [mingguan, bulanan]
+ *         description: Filter periode grafik (default mingguan)
+ *     responses:
+ *       200:
+ *         description: Data grafik kepatuhan berhasil diambil
+ */
+router.get(
+  "/kepatuhan/:pasienId/grafik",
+  authMiddleware,
+  obatController.getGrafikKepatuhan,
+);
 
 module.exports = router;
