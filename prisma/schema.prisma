@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -223,3 +224,6 @@ model BadgeMotivasi {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 }
+
+// Seed config
+// Run: npm run seed

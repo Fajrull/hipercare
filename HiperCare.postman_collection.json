@@ -1,0 +1,922 @@
+{
+  "info": {
+    "name": "HiperCare API",
+    "description": "Postman Collection untuk testing API HiperCare",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "pasien_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "perawat_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "keluarga_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "AUTH",
+      "item": [
+        {
+          "name": "AUTH-01 Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.status && res.data && res.data.token) {",
+                  "  pm.collectionVariables.set('token', res.data.token);",
+                  "  console.log('Token tersimpan:', res.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login semua role. Token otomatis tersimpan ke collection variable."
+          }
+        },
+        {
+          "name": "AUTH-01 Login (sebagai Perawat)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.status && res.data && res.data.token) {",
+                  "  pm.collectionVariables.set('token', res.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"perawat01\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "AUTH-01 Login (sebagai Pasien)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.status && res.data && res.data.token) {",
+                  "  pm.collectionVariables.set('token', res.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"budi1234\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "AUTH-02 Get Me",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "AUTH-03 Update Device ID",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"fcm_token_sample_abc123xyz\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/update-device",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "update-device"]
+            }
+          }
+        },
+        {
+          "name": "AUTH-04 Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.collectionVariables.set('token', '');"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "PASIEN",
+      "item": [
+        {
+          "name": "USER-01 Registrasi Pasien (manual)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.status && res.data) {",
+                  "  pm.collectionVariables.set('pasien_id', res.data.pasien_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama\": \"Budi Santoso\",\n  \"umur\": 55,\n  \"jenis_kelamin\": \"L\",\n  \"pekerjaan\": \"Wiraswasta\",\n  \"pendidikan_terakhir\": \"SMA\",\n  \"lama_menderita_ht\": \"3 tahun\",\n  \"alamat\": \"Jl. Mawar No. 10, Yogyakarta\",\n  \"username\": \"budi1234\",\n  \"password\": \"password123\",\n  \"auto_generate\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pasien",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pasien"]
+            },
+            "description": "Login sebagai perawat sebelum request ini"
+          }
+        },
+        {
+          "name": "USER-01 Registrasi Pasien (auto-generate)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.status && res.data) {",
+                  "  pm.collectionVariables.set('pasien_id', res.data.pasien_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama\": \"Slamet Riyadi\",\n  \"umur\": 60,\n  \"jenis_kelamin\": \"L\",\n  \"pekerjaan\": \"Pensiunan\",\n  \"pendidikan_terakhir\": \"S1\",\n  \"lama_menderita_ht\": \"5 tahun\",\n  \"alamat\": \"Jl. Melati No. 5, Sleman\",\n  \"auto_generate\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pasien",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pasien"]
+            }
+          }
+        },
+        {
+          "name": "USER-05 Get All Pasien",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/pasien",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pasien"]
+            }
+          }
+        },
+        {
+          "name": "USER-05 Get Detail Pasien",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/pasien/{{pasien_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pasien", "{{pasien_id}}"]
+            }
+          }
+        },
+        {
+          "name": "USER-06 Update Pasien",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama\": \"Budi Santoso Updated\",\n  \"umur\": 56,\n  \"pekerjaan\": \"Pedagang\",\n  \"alamat\": \"Jl. Mawar No. 12, Yogyakarta\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pasien/{{pasien_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pasien", "{{pasien_id}}"]
+            }
+          }
+        },
+        {
+          "name": "USER-02 Registrasi Keluarga",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.status && res.data) {",
+                  "  pm.collectionVariables.set('keluarga_id', res.data.keluarga_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama\": \"Siti Rahayu\",\n  \"hubungan\": \"Istri\",\n  \"pendidikan\": \"SMA\",\n  \"pekerjaan\": \"Ibu Rumah Tangga\",\n  \"umur\": 50\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pasien/{{pasien_id}}/keluarga",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pasien", "{{pasien_id}}", "keluarga"]
+            },
+            "description": "Login sebagai pasien sebelum request ini"
+          }
+        },
+        {
+          "name": "Update Keluarga",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama\": \"Siti Rahayu Updated\",\n  \"hubungan\": \"Istri\",\n  \"umur\": 51\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pasien/{{pasien_id}}/keluarga/{{keluarga_id}}",
+              "host": ["{{base_url}}"],
+              "path": [
+                "api",
+                "pasien",
+                "{{pasien_id}}",
+                "keluarga",
+                "{{keluarga_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Keluarga",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/pasien/{{pasien_id}}/keluarga/{{keluarga_id}}",
+              "host": ["{{base_url}}"],
+              "path": [
+                "api",
+                "pasien",
+                "{{pasien_id}}",
+                "keluarga",
+                "{{keluarga_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "PERAWAT",
+      "item": [
+        {
+          "name": "USER-03 Get All Perawat",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/perawat",
+              "host": ["{{base_url}}"],
+              "path": ["api", "perawat"]
+            },
+            "description": "Login sebagai admin sebelum request ini"
+          }
+        },
+        {
+          "name": "USER-03 Get Detail Perawat",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/perawat/{{perawat_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "perawat", "{{perawat_id}}"]
+            }
+          }
+        },
+        {
+          "name": "USER-03 Create Perawat",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.status && res.data) {",
+                  "  pm.collectionVariables.set('perawat_id', res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama\": \"Ns. Dewi Kusuma\",\n  \"umur\": 30,\n  \"jenis_kelamin\": \"P\",\n  \"no_wa\": \"08123456789\",\n  \"username\": \"perawat01\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/perawat",
+              "host": ["{{base_url}}"],
+              "path": ["api", "perawat"]
+            }
+          }
+        },
+        {
+          "name": "USER-03 Update Perawat",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama\": \"Ns. Dewi Kusuma Updated\",\n  \"no_wa\": \"08198765432\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/perawat/{{perawat_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "perawat", "{{perawat_id}}"]
+            }
+          }
+        },
+        {
+          "name": "USER-03 Delete Perawat",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/perawat/{{perawat_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "perawat", "{{perawat_id}}"]
+            }
+          }
+        },
+        {
+          "name": "USER-04 Assign Pasien ke Perawat",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pasien_id\": {{pasien_id}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/perawat/{{perawat_id}}/assign",
+              "host": ["{{base_url}}"],
+              "path": ["api", "perawat", "{{perawat_id}}", "assign"]
+            }
+          }
+        },
+        {
+          "name": "USER-04 Unassign Pasien dari Perawat",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/perawat/{{perawat_id}}/assign/{{pasien_id}}",
+              "host": ["{{base_url}}"],
+              "path": [
+                "api",
+                "perawat",
+                "{{perawat_id}}",
+                "assign",
+                "{{pasien_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "OBAT",
+      "item": [
+        {
+          "name": "Master Obat",
+          "item": [
+            {
+              "name": "OBAT-01 Get All Master Obat",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/obat/master",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "obat", "master"]
+                }
+              }
+            },
+            {
+              "name": "OBAT-01 Get Detail Master Obat",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/obat/master/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "obat", "master", "1"]
+                }
+              }
+            },
+            {
+              "name": "OBAT-01 Create Master Obat",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nama_obat\": \"Amlodipine\",\n  \"dosis\": \"5mg\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/obat/master",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "obat", "master"]
+                },
+                "description": "Login sebagai perawat/admin"
+              }
+            },
+            {
+              "name": "OBAT-01 Update Master Obat",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nama_obat\": \"Amlodipine\",\n  \"dosis\": \"10mg\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/obat/master/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "obat", "master", "1"]
+                }
+              }
+            },
+            {
+              "name": "OBAT-01 Delete Master Obat",
+              "request": {
+                "method": "DELETE",
+                "url": {
+                  "raw": "{{base_url}}/api/obat/master/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "obat", "master", "1"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obat Pasien",
+          "item": [
+            {
+              "name": "OBAT-03 Get Obat Pasien",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/obat/pasien/{{pasien_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "obat", "pasien", "{{pasien_id}}"]
+                }
+              }
+            },
+            {
+              "name": "OBAT-02 Tambah Obat Pasien",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"master_obat_id\": 1,\n  \"jumlah_stok\": 30,\n  \"kategori_waktu\": \"Pagi\",\n  \"dosis\": \"1 tablet\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/obat/pasien/{{pasien_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "obat", "pasien", "{{pasien_id}}"]
+                },
+                "description": "Login sebagai pasien"
+              }
+            },
+            {
+              "name": "OBAT-04 Update Obat Pasien",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"jumlah_stok\": 25,\n  \"dosis\": \"1 tablet\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/obat/pasien/{{pasien_id}}/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "obat", "pasien", "{{pasien_id}}", "1"]
+                }
+              }
+            },
+            {
+              "name": "OBAT-05 Delete Obat Pasien",
+              "request": {
+                "method": "DELETE",
+                "url": {
+                  "raw": "{{base_url}}/api/obat/pasien/{{pasien_id}}/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "obat", "pasien", "{{pasien_id}}", "1"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Kepatuhan",
+          "item": [
+            {
+              "name": "OBAT-06 Konfirmasi Minum (diminum)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"obat_pasien_id\": 1,\n  \"tanggal\": \"2026-07-05\",\n  \"kategori_waktu\": \"Pagi\",\n  \"status\": \"diminum\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/obat/kepatuhan/{{pasien_id}}/konfirmasi",
+                  "host": ["{{base_url}}"],
+                  "path": [
+                    "api",
+                    "obat",
+                    "kepatuhan",
+                    "{{pasien_id}}",
+                    "konfirmasi"
+                  ]
+                },
+                "description": "Login sebagai pasien"
+              }
+            },
+            {
+              "name": "OBAT-07 Konfirmasi Minum (tidak diminum)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"obat_pasien_id\": 1,\n  \"tanggal\": \"2026-07-05\",\n  \"kategori_waktu\": \"Siang\",\n  \"status\": \"tidak_diminum\",\n  \"alasan\": \"Lupa membawa obat saat bepergian\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/obat/kepatuhan/{{pasien_id}}/konfirmasi",
+                  "host": ["{{base_url}}"],
+                  "path": [
+                    "api",
+                    "obat",
+                    "kepatuhan",
+                    "{{pasien_id}}",
+                    "konfirmasi"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "OBAT-07 Konfirmasi Minum (tidak diminum tanpa alasan - harus error)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"obat_pasien_id\": 1,\n  \"tanggal\": \"2026-07-05\",\n  \"kategori_waktu\": \"Malam\",\n  \"status\": \"tidak_diminum\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/obat/kepatuhan/{{pasien_id}}/konfirmasi",
+                  "host": ["{{base_url}}"],
+                  "path": [
+                    "api",
+                    "obat",
+                    "kepatuhan",
+                    "{{pasien_id}}",
+                    "konfirmasi"
+                  ]
+                },
+                "description": "Ekspektasi: error 400 karena alasan kosong"
+              }
+            },
+            {
+              "name": "OBAT-08 Get Obat Belum Dikonfirmasi",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/obat/kepatuhan/{{pasien_id}}/belum-dikonfirmasi",
+                  "host": ["{{base_url}}"],
+                  "path": [
+                    "api",
+                    "obat",
+                    "kepatuhan",
+                    "{{pasien_id}}",
+                    "belum-dikonfirmasi"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "OBAT-09 Riwayat Kepatuhan (mingguan)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/obat/kepatuhan/{{pasien_id}}/riwayat?filter=mingguan",
+                  "host": ["{{base_url}}"],
+                  "path": [
+                    "api",
+                    "obat",
+                    "kepatuhan",
+                    "{{pasien_id}}",
+                    "riwayat"
+                  ],
+                  "query": [{ "key": "filter", "value": "mingguan" }]
+                }
+              }
+            },
+            {
+              "name": "OBAT-09 Riwayat Kepatuhan (bulanan)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/obat/kepatuhan/{{pasien_id}}/riwayat?filter=bulanan",
+                  "host": ["{{base_url}}"],
+                  "path": [
+                    "api",
+                    "obat",
+                    "kepatuhan",
+                    "{{pasien_id}}",
+                    "riwayat"
+                  ],
+                  "query": [{ "key": "filter", "value": "bulanan" }]
+                }
+              }
+            },
+            {
+              "name": "OBAT-10 Grafik Kepatuhan (mingguan)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/obat/kepatuhan/{{pasien_id}}/grafik?filter=mingguan",
+                  "host": ["{{base_url}}"],
+                  "path": [
+                    "api",
+                    "obat",
+                    "kepatuhan",
+                    "{{pasien_id}}",
+                    "grafik"
+                  ],
+                  "query": [{ "key": "filter", "value": "mingguan" }]
+                }
+              }
+            },
+            {
+              "name": "OBAT-10 Grafik Kepatuhan (bulanan)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/obat/kepatuhan/{{pasien_id}}/grafik?filter=bulanan",
+                  "host": ["{{base_url}}"],
+                  "path": [
+                    "api",
+                    "obat",
+                    "kepatuhan",
+                    "{{pasien_id}}",
+                    "grafik"
+                  ],
+                  "query": [{ "key": "filter", "value": "bulanan" }]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "TEKANAN DARAH",
+      "item": [
+        {
+          "name": "TD-01 Input TD (Normal)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tanggal\": \"2026-07-05\",\n  \"sistolik\": 115,\n  \"diastolik\": 75\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tekanan-darah/{{pasien_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tekanan-darah", "{{pasien_id}}"]
+            }
+          }
+        },
+        {
+          "name": "TD-01 Input TD (Pre-HT)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tanggal\": \"2026-07-05\",\n  \"sistolik\": 130,\n  \"diastolik\": 85\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tekanan-darah/{{pasien_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tekanan-darah", "{{pasien_id}}"]
+            }
+          }
+        },
+        {
+          "name": "TD-03 Input TD (Krisis HT - trigger notifikasi darurat)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tanggal\": \"2026-07-05\",\n  \"sistolik\": 185,\n  \"diastolik\": 125\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tekanan-darah/{{pasien_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tekanan-darah", "{{pasien_id}}"]
+            },
+            "description": "Ekspektasi: is_emergency true, notifikasi dikirim ke keluarga & perawat"
+          }
+        },
+        {
+          "name": "TD-04 Get Riwayat TD",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/tekanan-darah/{{pasien_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tekanan-darah", "{{pasien_id}}"]
+            }
+          }
+        },
+        {
+          "name": "TD-04 Get Riwayat TD (filter mingguan)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/tekanan-darah/{{pasien_id}}?filter=mingguan",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tekanan-darah", "{{pasien_id}}"],
+              "query": [{ "key": "filter", "value": "mingguan" }]
+            }
+          }
+        },
+        {
+          "name": "TD-05 Get Grafik TD (mingguan)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/tekanan-darah/{{pasien_id}}/grafik?filter=mingguan",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tekanan-darah", "{{pasien_id}}", "grafik"],
+              "query": [{ "key": "filter", "value": "mingguan" }]
+            }
+          }
+        },
+        {
+          "name": "TD-05 Get Grafik TD (bulanan)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/tekanan-darah/{{pasien_id}}/grafik?filter=bulanan",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tekanan-darah", "{{pasien_id}}", "grafik"],
+              "query": [{ "key": "filter", "value": "bulanan" }]
+            }
+          }
+        },
+        {
+          "name": "TD-06 Update TD",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sistolik\": 135,\n  \"diastolik\": 88\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tekanan-darah/{{pasien_id}}/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tekanan-darah", "{{pasien_id}}", "1"]
+            }
+          }
+        },
+        {
+          "name": "TD-06 Delete TD",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/tekanan-darah/{{pasien_id}}/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tekanan-darah", "{{pasien_id}}", "1"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
