@@ -917,6 +917,191 @@
           }
         }
       ]
+    },
+    {
+      "name": "DIET DASH",
+      "item": [
+        {
+          "name": "Master Diet",
+          "item": [
+            {
+              "name": "DIET-01 Get All Master Diet",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/diet-dash/master",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "diet-dash", "master"]
+                }
+              }
+            },
+            {
+              "name": "DIET-01 Get Detail Master Diet",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/diet-dash/master/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "diet-dash", "master", "1"]
+                }
+              }
+            },
+            {
+              "name": "DIET-01 Create Master Diet",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nama_makanan\": \"Nasi Merah\",\n  \"foto\": \"https://storage.example.com/nasi-merah.jpg\",\n  \"kandungan_gizi\": \"Kalori 150kkal, Karbohidrat 30g, Serat 2g\",\n  \"resep_makanan\": \"Cuci beras merah, masak dengan perbandingan air 1:2\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/diet-dash/master",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "diet-dash", "master"]
+                },
+                "description": "Login sebagai perawat/admin"
+              }
+            },
+            {
+              "name": "DIET-01 Update Master Diet",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nama_makanan\": \"Nasi Merah Updated\",\n  \"kandungan_gizi\": \"Kalori 145kkal, Karbohidrat 28g, Serat 3g\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/diet-dash/master/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "diet-dash", "master", "1"]
+                }
+              }
+            },
+            {
+              "name": "DIET-01 Delete Master Diet",
+              "request": {
+                "method": "DELETE",
+                "url": {
+                  "raw": "{{base_url}}/api/diet-dash/master/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "diet-dash", "master", "1"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "DIET-02 Get Rekomendasi Menu",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/diet-dash/rekomendasi",
+              "host": ["{{base_url}}"],
+              "path": ["api", "diet-dash", "rekomendasi"]
+            }
+          }
+        },
+        {
+          "name": "Log Konsumsi",
+          "item": [
+            {
+              "name": "DIET-04 Get Log Konsumsi (semua)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/diet-dash/log/{{pasien_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "diet-dash", "log", "{{pasien_id}}"]
+                }
+              }
+            },
+            {
+              "name": "DIET-04 Get Log Konsumsi (filter tanggal)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/diet-dash/log/{{pasien_id}}?tanggal=2026-07-05",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "diet-dash", "log", "{{pasien_id}}"],
+                  "query": [{ "key": "tanggal", "value": "2026-07-05" }]
+                }
+              }
+            },
+            {
+              "name": "DIET-03 Input Log Konsumsi (dari master)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"master_diet_id\": 1,\n  \"kategori_makan\": \"Pagi\",\n  \"tanggal\": \"2026-07-05\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/diet-dash/log/{{pasien_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "diet-dash", "log", "{{pasien_id}}"]
+                },
+                "description": "Login sebagai pasien"
+              }
+            },
+            {
+              "name": "DIET-03 Input Log Konsumsi (manual)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nama_makanan\": \"Tempe Goreng\",\n  \"kategori_makan\": \"Siang\",\n  \"foto\": \"https://storage.example.com/tempe.jpg\",\n  \"tanggal\": \"2026-07-05\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/diet-dash/log/{{pasien_id}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "diet-dash", "log", "{{pasien_id}}"]
+                }
+              }
+            },
+            {
+              "name": "DIET-05 Update Log Konsumsi",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nama_makanan\": \"Tempe Bakar\",\n  \"kategori_makan\": \"Siang\",\n  \"tanggal\": \"2026-07-05\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/diet-dash/log/{{pasien_id}}/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "diet-dash", "log", "{{pasien_id}}", "1"]
+                }
+              }
+            },
+            {
+              "name": "DIET-05 Delete Log Konsumsi",
+              "request": {
+                "method": "DELETE",
+                "url": {
+                  "raw": "{{base_url}}/api/diet-dash/log/{{pasien_id}}/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "diet-dash", "log", "{{pasien_id}}", "1"]
+                }
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }
