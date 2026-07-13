@@ -1,13 +1,18 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const authMiddleware = require('../../middlewares/auth.middleware');
-const roleMiddleware = require('../../middlewares/role.middleware');
+const jadwalController = require("./jadwal-kontrol.controller");
+const authMiddleware = require("../../middlewares/auth.middleware");
+const roleMiddleware = require("../../middlewares/role.middleware");
 
 /**
  * @swagger
  * /api/jadwal-kontrol/{pasienId}:
  *   get:
  *     summary: Ambil daftar jadwal kontrol pasien
+ *     description: >
+ *       Response menyertakan field tambahan:
+ *       - `selisih_hari`: berapa hari lagi jadwal tersebut
+ *       - `status`: sudah_lewat / hari_ini / H-3 / H-1 / akan_datang
  *     tags: [Jadwal Kontrol]
  *     security:
  *       - bearerAuth: []
@@ -19,18 +24,19 @@ const roleMiddleware = require('../../middlewares/role.middleware');
  *           type: integer
  *     responses:
  *       200:
- *         description: Daftar jadwal kontrol berhasil diambil
+ *         description: Jadwal kontrol berhasil diambil
  */
-router.get('/:pasienId', authMiddleware, (req, res) => {
-  res.json({ status: true, message: 'Jadwal kontrol - coming soon', data: null });
-});
+router.get("/:pasienId", authMiddleware, jadwalController.getJadwal);
 
 /**
  * @swagger
  * /api/jadwal-kontrol/{pasienId}:
  *   post:
  *     summary: Tambah jadwal kontrol baru
- *     description: Sistem otomatis kirim reminder ke pasien & keluarga pada H-3, H-1, dan H-0 di pagi hari
+ *     description: >
+ *       Menambah jadwal kontrol kesehatan pasien.
+ *       Sistem otomatis kirim notifikasi ke pasien, keluarga, dan perawat saat jadwal dibuat.
+ *       Reminder H-3, H-1, H-0 akan dikirim otomatis via scheduler (NOTIF-06).
  *     tags: [Jadwal Kontrol]
  *     security:
  *       - bearerAuth: []
@@ -53,10 +59,11 @@ router.get('/:pasienId', authMiddleware, (req, res) => {
  *               tanggal:
  *                 type: string
  *                 format: date
- *                 example: "2026-07-10"
+ *                 example: "2026-07-15"
  *               jam:
  *                 type: string
- *                 example: "08:00"
+ *                 example: "09:00"
+ *                 description: Format HH:mm
  *               lokasi_faskes:
  *                 type: string
  *                 example: Puskesmas Kebayoran Baru
@@ -66,14 +73,19 @@ router.get('/:pasienId', authMiddleware, (req, res) => {
  *     responses:
  *       201:
  *         description: Jadwal kontrol berhasil ditambahkan
+ *       400:
+ *         description: Validasi gagal atau jadwal di masa lalu
  */
-router.post('/:pasienId', authMiddleware, roleMiddleware('pasien', 'perawat'), (req, res) => {
-  res.json({ status: true, message: 'Tambah jadwal kontrol - coming soon', data: null });
-});
+router.post(
+  "/:pasienId",
+  authMiddleware,
+  roleMiddleware("pasien", "perawat"),
+  jadwalController.tambahJadwal,
+);
 
 /**
  * @swagger
- * /api/jadwal-kontrol/{pasienId}/{id}:
+ * /api/jadwal-kontrol/{pasienId}/{jadwalId}:
  *   delete:
  *     summary: Hapus jadwal kontrol
  *     tags: [Jadwal Kontrol]
@@ -86,16 +98,21 @@ router.post('/:pasienId', authMiddleware, roleMiddleware('pasien', 'perawat'), (
  *         schema:
  *           type: integer
  *       - in: path
- *         name: id
+ *         name: jadwalId
  *         required: true
  *         schema:
  *           type: integer
  *     responses:
  *       200:
  *         description: Jadwal kontrol berhasil dihapus
+ *       400:
+ *         description: Jadwal tidak ditemukan
  */
-router.delete('/:pasienId/:id', authMiddleware, roleMiddleware('pasien', 'perawat'), (req, res) => {
-  res.json({ status: true, message: 'Hapus jadwal kontrol - coming soon', data: null });
-});
+router.delete(
+  "/:pasienId/:jadwalId",
+  authMiddleware,
+  roleMiddleware("pasien", "perawat"),
+  jadwalController.deleteJadwal,
+);
 
 module.exports = router;

@@ -29,6 +29,16 @@
       "key": "keluarga_id",
       "value": "1",
       "type": "string"
+    },
+    {
+      "key": "keluhan_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "jadwal_id",
+      "value": "1",
+      "type": "string"
     }
   ],
   "auth": {
@@ -1100,6 +1110,316 @@
               }
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "KELUHAN KLINIS",
+      "item": [
+        {
+          "name": "KLINIS-02 Get Riwayat Keluhan",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/keluhan/{{pasien_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "keluhan", "{{pasien_id}}"]
+            }
+          }
+        },
+        {
+          "name": "KLINIS-01 Input Keluhan (by pasien)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.status && res.data) {",
+                  "  pm.collectionVariables.set('keluhan_id', res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tanggal\": \"2026-07-05\",\n  \"keluhan\": \"Kepala pusing dan tengkuk terasa berat sejak pagi\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/keluhan/{{pasien_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "keluhan", "{{pasien_id}}"]
+            },
+            "description": "Login sebagai pasien"
+          }
+        },
+        {
+          "name": "KLINIS-01 Input Keluhan (by keluarga)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tanggal\": \"2026-07-05\",\n  \"keluhan\": \"Pasien tampak lemas dan tidak nafsu makan sejak kemarin\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/keluhan/{{pasien_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "keluhan", "{{pasien_id}}"]
+            },
+            "description": "Login sebagai keluarga"
+          }
+        },
+        {
+          "name": "KLINIS-03 Update Keluhan",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"keluhan\": \"Kepala pusing, tengkuk berat, dan mata berkunang-kunang\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/keluhan/{{pasien_id}}/{{keluhan_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "keluhan", "{{pasien_id}}", "{{keluhan_id}}"]
+            }
+          }
+        },
+        {
+          "name": "KLINIS-03 Delete Keluhan",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/keluhan/{{pasien_id}}/{{keluhan_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "keluhan", "{{pasien_id}}", "{{keluhan_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "JADWAL KONTROL",
+      "item": [
+        {
+          "name": "KONTROL-02 Get Jadwal Kontrol",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/jadwal-kontrol/{{pasien_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "jadwal-kontrol", "{{pasien_id}}"]
+            }
+          }
+        },
+        {
+          "name": "KONTROL-01 Tambah Jadwal Kontrol",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.status && res.data) {",
+                  "  pm.collectionVariables.set('jadwal_id', res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tanggal\": \"2026-07-15\",\n  \"jam\": \"09:00\",\n  \"lokasi_faskes\": \"Puskesmas Kebayoran Baru\",\n  \"nama_dokter\": \"dr. Siti Rahayu\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/jadwal-kontrol/{{pasien_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "jadwal-kontrol", "{{pasien_id}}"]
+            },
+            "description": "Login sebagai pasien atau perawat"
+          }
+        },
+        {
+          "name": "KONTROL-01 Tambah Jadwal (validasi masa lalu - harus error)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tanggal\": \"2025-01-01\",\n  \"jam\": \"09:00\",\n  \"lokasi_faskes\": \"Puskesmas\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/jadwal-kontrol/{{pasien_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "jadwal-kontrol", "{{pasien_id}}"]
+            },
+            "description": "Ekspektasi: error 400 karena tanggal di masa lalu"
+          }
+        },
+        {
+          "name": "KONTROL-03 Delete Jadwal Kontrol",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/jadwal-kontrol/{{pasien_id}}/{{jadwal_id}}",
+              "host": ["{{base_url}}"],
+              "path": [
+                "api",
+                "jadwal-kontrol",
+                "{{pasien_id}}",
+                "{{jadwal_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "EDUKASI",
+      "item": [
+        {
+          "name": "EDU-02 Get All Edukasi",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/edukasi",
+              "host": ["{{base_url}}"],
+              "path": ["api", "edukasi"]
+            }
+          }
+        },
+        {
+          "name": "EDU-02 Get Edukasi (filter Video)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/edukasi?kategori=Video",
+              "host": ["{{base_url}}"],
+              "path": ["api", "edukasi"],
+              "query": [{ "key": "kategori", "value": "Video" }]
+            }
+          }
+        },
+        {
+          "name": "EDU-02 Get Edukasi (filter Materi)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/edukasi?kategori=Materi",
+              "host": ["{{base_url}}"],
+              "path": ["api", "edukasi"],
+              "query": [{ "key": "kategori", "value": "Materi" }]
+            }
+          }
+        },
+        {
+          "name": "EDU-02 Get Edukasi Grouped per Topik",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/edukasi/grouped",
+              "host": ["{{base_url}}"],
+              "path": ["api", "edukasi", "grouped"]
+            }
+          }
+        },
+        {
+          "name": "EDU-03 Get Detail Edukasi",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/edukasi/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "edukasi", "1"]
+            }
+          }
+        },
+        {
+          "name": "EDU-01 Create Edukasi (Video)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"judul\": \"Mengenal Hipertensi dan Faktor Risikonya\",\n  \"kategori\": \"Video\",\n  \"konten\": \"https://www.youtube.com/watch?v=xxxxx\",\n  \"topik\": \"Mengenal HT\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/edukasi",
+              "host": ["{{base_url}}"],
+              "path": ["api", "edukasi"]
+            },
+            "description": "Login sebagai admin"
+          }
+        },
+        {
+          "name": "EDU-01 Create Edukasi (Materi)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"judul\": \"Panduan Diet DASH untuk Pasien Hipertensi\",\n  \"kategori\": \"Materi\",\n  \"konten\": \"/uploads/materi/diet-dash.pdf\",\n  \"topik\": \"Diet DASH\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/edukasi",
+              "host": ["{{base_url}}"],
+              "path": ["api", "edukasi"]
+            }
+          }
+        },
+        {
+          "name": "EDU-01 Create Edukasi (URL bukan YouTube - harus error)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"judul\": \"Test Video Invalid\",\n  \"kategori\": \"Video\",\n  \"konten\": \"https://vimeo.com/xxxxx\",\n  \"topik\": \"Mengenal HT\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/edukasi",
+              "host": ["{{base_url}}"],
+              "path": ["api", "edukasi"]
+            },
+            "description": "Ekspektasi: error 400 karena URL bukan YouTube"
+          }
+        },
+        {
+          "name": "EDU-01 Update Edukasi",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"judul\": \"Mengenal Hipertensi - Updated\",\n  \"topik\": \"Mengenal HT\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/edukasi/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "edukasi", "1"]
+            }
+          }
+        },
+        {
+          "name": "EDU-01 Delete Edukasi",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/edukasi/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "edukasi", "1"]
+            }
+          }
         }
       ]
     }
