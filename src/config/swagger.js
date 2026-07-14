@@ -11,8 +11,8 @@ const options = {
     },
     servers: [
       {
-        url: `http://localhost:${process.env.PORT || 3000}`,
-        description: 'Development Server',
+        url: 'https://kimerahealth.site',
+        description: 'Production Server',
       },
     ],
     components: {
