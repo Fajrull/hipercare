@@ -5,20 +5,18 @@ let firebaseReady = false;
 try {
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  
+  // Gunakan base64 jika tersedia, fallback ke raw
+  let privateKey;
+  if (process.env.FIREBASE_PRIVATE_KEY_BASE64) {
+    privateKey = Buffer.from(process.env.FIREBASE_PRIVATE_KEY_BASE64, 'base64').toString('utf8');
+  } else {
+    privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  }
 
   if (projectId && clientEmail && privateKey) {
     // Handle berbagai format private key di environment variable
-    privateKey = privateKey
-      .replace(/\\n/g, '\n')
-      .replace(/\\r/g, '')
-      .trim();
-
-    if (!privateKey.includes('\n')) {
-      privateKey = privateKey
-        .replace('-----BEGIN RSA PRIVATE KEY-----', '-----BEGIN RSA PRIVATE KEY-----\n')
-        .replace('-----END RSA PRIVATE KEY-----', '\n-----END RSA PRIVATE KEY-----');
-}
+    privateKey = privateKey.replace(/\\n/g, '\n');
 
     // Handle jika private key dibungkus tanda kutip
     if (privateKey.startsWith('"')) {
