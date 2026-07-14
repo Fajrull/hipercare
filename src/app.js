@@ -37,7 +37,7 @@ app.use("/api/obat", require("./modules/obat/obat.route"));
 //   "/api/tekanan-darah",
 //   require("./modules/tekanan-darah/tekanan-darah.route"),
 // );
-// app.use("/api/diet-dash", require("./modules/diet-dash/diet-dash.route"));
+app.use("/api/diet-dash", require("./modules/diet-dash/diet-dash.route"));
 // app.use("/api/keluhan", require("./modules/keluhan/keluhan.route"));
 // app.use(
 //   "/api/jadwal-kontrol",
