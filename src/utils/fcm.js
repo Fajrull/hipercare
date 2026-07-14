@@ -9,7 +9,16 @@ try {
 
   if (projectId && clientEmail && privateKey) {
     // Handle berbagai format private key di environment variable
-    privateKey = privateKey.replace(/\\n/g, '\n');
+    privateKey = privateKey
+      .replace(/\\n/g, '\n')
+      .replace(/\\r/g, '')
+      .trim();
+
+    if (!privateKey.includes('\n')) {
+      privateKey = privateKey
+        .replace('-----BEGIN RSA PRIVATE KEY-----', '-----BEGIN RSA PRIVATE KEY-----\n')
+        .replace('-----END RSA PRIVATE KEY-----', '\n-----END RSA PRIVATE KEY-----');
+}
 
     // Handle jika private key dibungkus tanda kutip
     if (privateKey.startsWith('"')) {
