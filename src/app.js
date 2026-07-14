@@ -29,21 +29,21 @@ app.use(
 // =============================================
 // Routes
 // =============================================
-// app.use("/api/auth", require("./modules/auth/auth.route"));
-// app.use("/api/pasien", require("./modules/pasien/pasien.route"));
-// app.use("/api/perawat", require("./modules/perawat/perawat.route"));
-// app.use("/api/obat", require("./modules/obat/obat.route"));
-// app.use(
-//   "/api/tekanan-darah",
-//   require("./modules/tekanan-darah/tekanan-darah.route"),
-// );
-// app.use("/api/diet-dash", require("./modules/diet-dash/diet-dash.route"));
-// app.use("/api/keluhan", require("./modules/keluhan/keluhan.route"));
-// app.use(
-//   "/api/jadwal-kontrol",
-//   require("./modules/jadwal-kontrol/jadwal-kontrol.route"),
-// );
-// app.use("/api/edukasi", require("./modules/edukasi/edukasi.route"));
+app.use("/api/auth", require("./modules/auth/auth.route"));
+app.use("/api/pasien", require("./modules/pasien/pasien.route"));
+app.use("/api/perawat", require("./modules/perawat/perawat.route"));
+app.use("/api/obat", require("./modules/obat/obat.route"));
+app.use(
+  "/api/tekanan-darah",
+  require("./modules/tekanan-darah/tekanan-darah.route"),
+);
+app.use("/api/diet-dash", require("./modules/diet-dash/diet-dash.route"));
+app.use("/api/keluhan", require("./modules/keluhan/keluhan.route"));
+app.use(
+  "/api/jadwal-kontrol",
+  require("./modules/jadwal-kontrol/jadwal-kontrol.route"),
+);
+app.use("/api/edukasi", require("./modules/edukasi/edukasi.route"));
 // app.use("/api/notifikasi", require("./modules/notifikasi/notifikasi.route"));
 // app.use("/api/badge", require("./modules/badge/badge.route"));
 
