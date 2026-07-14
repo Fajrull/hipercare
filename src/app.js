@@ -17,14 +17,14 @@ app.use(express.json());
 // =============================================
 // Swagger Documentation
 // =============================================
-// app.use(
-//   "/api-docs",
-//   swaggerUi.serve,
-//   swaggerUi.setup(swaggerSpec, {
-//     customSiteTitle: "HiperCare API Docs",
-//     customCss: ".swagger-ui .topbar { background-color: #1a73e8; }",
-//   }),
-// );
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: "HiperCare API Docs",
+    customCss: ".swagger-ui .topbar { background-color: #1a73e8; }",
+  }),
+);
 
 // =============================================
 // Routes
@@ -61,24 +61,24 @@ app.get("/", (req, res) => {
 // =============================================
 // 404 Handler
 // =============================================
-// app.use((req, res) => {
-//   res.status(404).json({
-//     status: false,
-//     message: `Route ${req.method} ${req.originalUrl} tidak ditemukan`,
-//     data: null,
-//   });
-// });
+app.use((req, res) => {
+  res.status(404).json({
+    status: false,
+    message: `Route ${req.method} ${req.originalUrl} tidak ditemukan`,
+    data: null,
+  });
+});
 
 // =============================================
 // Global Error Handler
 // =============================================
-// app.use((err, req, res, next) => {
-//   console.error(err.stack);
-//   res.status(500).json({
-//     status: false,
-//     message: "Internal Server Error",
-//     data: null,
-//   });
-// });
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    status: false,
+    message: "Internal Server Error",
+    data: null,
+  });
+});
 
 module.exports = app;
