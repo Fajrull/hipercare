@@ -1,72 +1,81 @@
 const admin = require('firebase-admin');
 
-// Inisialisasi Firebase Admin SDK
-// Pastikan environment variable sudah di-set di .env
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  });
+let firebaseReady = false;
+
+try {
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+  if (projectId && clientEmail && privateKey) {
+    // Handle berbagai format private key di environment variable
+    privateKey = privateKey.replace(/\\n/g, '\n');
+
+    // Handle jika private key dibungkus tanda kutip
+    if (privateKey.startsWith('"')) {
+      privateKey = privateKey.slice(1, -1);
+    }
+
+    if (!admin.apps.length) {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId,
+          clientEmail,
+          privateKey,
+        }),
+      });
+    }
+    firebaseReady = true;
+    console.log('✅ Firebase FCM siap digunakan');
+  } else {
+    console.warn('⚠️  Firebase env belum dikonfigurasi, push notification dinonaktifkan');
+  }
+} catch (err) {
+  // Jangan throw — cukup log agar server tetap jalan
+  console.warn('⚠️  Firebase gagal diinisialisasi:', err.message);
+  firebaseReady = false;
 }
 
-/**
- * Kirim push notification ke satu device
- * @param {string} deviceId - FCM token device tujuan
- * @param {string} title - Judul notifikasi
- * @param {string} body - Isi pesan notifikasi
- * @param {object} data - Data tambahan (opsional)
- */
 const sendNotification = async (deviceId, title, body, data = {}) => {
-  if (!deviceId) {
-    console.warn('FCM: device_id tidak ditemukan, notifikasi tidak dikirim.');
+  if (!firebaseReady) {
+    console.warn('FCM skip: Firebase belum dikonfigurasi');
     return null;
   }
-
-  const message = {
-    token: deviceId,
-    notification: { title, body },
-    data,
-  };
+  if (!deviceId) return null;
 
   try {
-    const response = await admin.messaging().send(message);
-    console.log('FCM: Notifikasi berhasil dikirim:', response);
+    const response = await admin.messaging().send({
+      token: deviceId,
+      notification: { title, body },
+      data,
+    });
+    console.log('FCM terkirim:', response);
     return response;
   } catch (err) {
-    console.error('FCM: Gagal mengirim notifikasi:', err.message);
+    console.error('FCM gagal:', err.message);
     return null;
   }
 };
 
-/**
- * Kirim push notification ke banyak device sekaligus
- * @param {string[]} deviceIds - Array FCM token
- * @param {string} title - Judul notifikasi
- * @param {string} body - Isi pesan notifikasi
- * @param {object} data - Data tambahan (opsional)
- */
 const sendMulticastNotification = async (deviceIds, title, body, data = {}) => {
-  const validDevices = deviceIds.filter(Boolean);
-  if (validDevices.length === 0) {
-    console.warn('FCM: Tidak ada device_id valid, notifikasi tidak dikirim.');
+  if (!firebaseReady) {
+    console.warn('FCM skip: Firebase belum dikonfigurasi');
     return null;
   }
 
-  const message = {
-    tokens: validDevices,
-    notification: { title, body },
-    data,
-  };
+  const validDevices = deviceIds.filter(Boolean);
+  if (validDevices.length === 0) return null;
 
   try {
-    const response = await admin.messaging().sendEachForMulticast(message);
+    const response = await admin.messaging().sendEachForMulticast({
+      tokens: validDevices,
+      notification: { title, body },
+      data,
+    });
     console.log(`FCM: ${response.successCount} berhasil, ${response.failureCount} gagal`);
     return response;
   } catch (err) {
-    console.error('FCM: Gagal mengirim multicast notifikasi:', err.message);
+    console.error('FCM multicast gagal:', err.message);
     return null;
   }
 };
