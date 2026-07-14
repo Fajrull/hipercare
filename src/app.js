@@ -31,8 +31,8 @@ app.use(
 // =============================================
 app.use("/api/auth", require("./modules/auth/auth.route"));
 app.use("/api/pasien", require("./modules/pasien/pasien.route"));
-// app.use("/api/perawat", require("./modules/perawat/perawat.route"));
-// app.use("/api/obat", require("./modules/obat/obat.route"));
+app.use("/api/perawat", require("./modules/perawat/perawat.route"));
+app.use("/api/obat", require("./modules/obat/obat.route"));
 // app.use(
 //   "/api/tekanan-darah",
 //   require("./modules/tekanan-darah/tekanan-darah.route"),
