@@ -252,10 +252,30 @@ const deleteKeluarga = async (keluargaId) => {
   const keluarga = await prisma.keluarga.findUnique({
     where: { id: parseInt(keluargaId) },
   });
-  if (!keluarga) throw new Error("Data keluarga tidak ditemukan");
+  if (!keluarga) throw new Error('Data keluarga tidak ditemukan');
 
-  // Hapus user keluarga sekaligus (cascade)
-  await prisma.users.delete({ where: { id: keluarga.user_id } });
+  await prisma.$transaction(async (tx) => {
+    // 1. Hapus notifikasi milik user keluarga
+    await tx.notifikasi.deleteMany({
+      where: { user_id: keluarga.user_id },
+    });
+
+    // 2. Hapus keluhan yang diinput oleh keluarga ini
+    await tx.keluhanKlinis.deleteMany({
+      where: { input_oleh_user_id: keluarga.user_id },
+    });
+
+    // 3. Hapus record keluarga
+    await tx.keluarga.delete({
+      where: { id: parseInt(keluargaId) },
+    });
+
+    // 4. Baru hapus user
+    await tx.users.delete({
+      where: { id: keluarga.user_id },
+    });
+  });
+
   return true;
 };
 
