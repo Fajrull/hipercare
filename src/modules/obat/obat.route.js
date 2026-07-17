@@ -3,17 +3,38 @@ const router = express.Router();
 const obatController = require("./obat.controller");
 const authMiddleware = require("../../middlewares/auth.middleware");
 const roleMiddleware = require("../../middlewares/role.middleware");
-const validate = require('../../middlewares/validate.middleware');
+const validate = require("../../middlewares/validate.middleware");
 const {
   tambahObatPasienValidator,
   konfirmasiMinumValidator,
   masterObatValidator,
-} = require('../../middlewares/validators/obat.validator');
+} = require("../../middlewares/validators/obat.validator");
 
 // Update route yang sudah ada
-router.post('/master', authMiddleware, roleMiddleware('admin', 'perawat'), masterObatValidator, validate, obatController.createMasterObat);
-router.post('/pasien/:pasienId', authMiddleware, roleMiddleware('pasien'), tambahObatPasienValidator, validate, obatController.tambahObatPasien);
-router.post('/kepatuhan/:pasienId/konfirmasi', authMiddleware, roleMiddleware('pasien'), konfirmasiMinumValidator, validate, obatController.konfirmasiMinum);
+router.post(
+  "/master",
+  authMiddleware,
+  roleMiddleware("admin", "perawat"),
+  masterObatValidator,
+  validate,
+  obatController.createMasterObat,
+);
+router.post(
+  "/pasien/:pasienId",
+  authMiddleware,
+  roleMiddleware("pasien"),
+  tambahObatPasienValidator,
+  validate,
+  obatController.tambahObatPasien,
+);
+router.post(
+  "/kepatuhan/:pasienId/konfirmasi",
+  authMiddleware,
+  roleMiddleware("pasien"),
+  konfirmasiMinumValidator,
+  validate,
+  obatController.konfirmasiMinum,
+);
 
 // =============================================
 // MASTER OBAT (OBAT-01)
@@ -394,7 +415,19 @@ router.get(
  *         schema:
  *           type: string
  *           enum: [mingguan, bulanan]
- *         description: Filter periode riwayat
+ *         description: Filter periode (opsional jika pakai start_date & end_date)
+ *       - in: query
+ *         name: start_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Tanggal mulai (format YYYY-MM-DD)
+ *       - in: query
+ *         name: end_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Tanggal akhir (format YYYY-MM-DD)
  *     responses:
  *       200:
  *         description: Riwayat kepatuhan berhasil diambil
@@ -410,9 +443,6 @@ router.get(
  * /api/obat/kepatuhan/{pasienId}/grafik:
  *   get:
  *     summary: Data grafik kepatuhan minum obat
- *     description: >
- *       Mengembalikan data grafik beserta summary persentase kepatuhan.
- *       Filter `mingguan` group by hari, filter `bulanan` group by minggu.
  *     tags: [Obat Pasien]
  *     security:
  *       - bearerAuth: []
@@ -427,7 +457,19 @@ router.get(
  *         schema:
  *           type: string
  *           enum: [mingguan, bulanan]
- *         description: Filter periode grafik (default mingguan)
+ *         description: Filter periode (opsional jika pakai start_date & end_date)
+ *       - in: query
+ *         name: start_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Tanggal mulai (format YYYY-MM-DD)
+ *       - in: query
+ *         name: end_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Tanggal akhir (format YYYY-MM-DD)
  *     responses:
  *       200:
  *         description: Data grafik kepatuhan berhasil diambil
