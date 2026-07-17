@@ -60,4 +60,17 @@ const deleteJadwal = async (req, res) => {
   }
 };
 
-module.exports = { tambahJadwal, getJadwal, deleteJadwal };
+const updateJadwal = async (req, res) => {
+  try {
+    const data = await jadwalService.updateJadwal(
+      req.params.jadwalId,
+      req.params.pasienId,
+      req.body,
+    );
+    return success(res, data, "Jadwal kontrol berhasil diupdate");
+  } catch (err) {
+    return error(res, err.message, 400);
+  }
+};
+
+module.exports = { tambahJadwal, getJadwal, deleteJadwal, updateJadwal };

@@ -154,6 +154,28 @@ const getGrafikKepatuhan = async (req, res) => {
   }
 };
 
+const updateLogKepatuhan = async (req, res) => {
+  try {
+    const data = await obatService.updateLogKepatuhan(
+      req.params.logId,
+      req.params.pasienId,
+      req.body,
+    );
+    return success(res, data, "Log kepatuhan berhasil diupdate");
+  } catch (err) {
+    return error(res, err.message, 400);
+  }
+};
+
+const deleteLogKepatuhan = async (req, res) => {
+  try {
+    await obatService.deleteLogKepatuhan(req.params.logId, req.params.pasienId);
+    return success(res, null, "Log kepatuhan berhasil dihapus");
+  } catch (err) {
+    return error(res, err.message, 400);
+  }
+};
+
 module.exports = {
   getAllMasterObat,
   getMasterObatById,
@@ -168,4 +190,6 @@ module.exports = {
   getObatBelumDikonfirmasi,
   getRiwayatKepatuhan,
   getGrafikKepatuhan,
+  updateLogKepatuhan,
+  deleteLogKepatuhan,
 };

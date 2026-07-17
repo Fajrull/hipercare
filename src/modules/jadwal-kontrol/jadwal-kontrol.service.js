@@ -168,9 +168,37 @@ const getJadwalUntukReminder = async () => {
   return jadwalList;
 };
 
+const updateJadwal = async (jadwalId, pasienId, data) => {
+  const jadwal = await prisma.jadwalKontrol.findFirst({
+    where: { id: parseInt(jadwalId), pasien_id: parseInt(pasienId) },
+  });
+  if (!jadwal) throw new Error("Jadwal kontrol tidak ditemukan");
+
+  const { tanggal, jam, lokasi_faskes, nama_dokter } = data;
+
+  if (tanggal && jam) {
+    const jadwalDatetime = new Date(`${tanggal}T${jam}:00`);
+    if (isNaN(jadwalDatetime))
+      throw new Error("Format tanggal atau jam tidak valid");
+    if (jadwalDatetime < new Date())
+      throw new Error("Jadwal kontrol tidak boleh di masa lalu");
+  }
+
+  return await prisma.jadwalKontrol.update({
+    where: { id: parseInt(jadwalId) },
+    data: {
+      tanggal: tanggal ? new Date(tanggal) : undefined,
+      jam: jam || undefined,
+      lokasi_faskes,
+      nama_dokter,
+    },
+  });
+};
+
 module.exports = {
   tambahJadwal,
   getJadwal,
   deleteJadwal,
   getJadwalUntukReminder,
+  updateJadwal,
 };

@@ -37,7 +37,19 @@ const inputTekananDarah = async (pasienId, data, inputterUserId) => {
   });
   if (!pasien) throw new Error("Pasien tidak ditemukan");
 
-  // TD-02: Auto klasifikasi
+  // Validasi 1 hari hanya bisa input 1x tekanan darah
+  const existingTD = await prisma.tekananDarah.findFirst({
+    where: {
+      pasien_id: parseInt(pasienId),
+      tanggal: new Date(tanggal),
+    },
+  });
+  if (existingTD) {
+    throw new Error(
+      "Tekanan darah untuk tanggal ini sudah diinput. Gunakan fitur edit jika ingin mengubah.",
+    );
+  }
+
   const { label, is_emergency } = klasifikasiTD(
     parseInt(sistolik),
     parseInt(diastolik),
@@ -58,7 +70,6 @@ const inputTekananDarah = async (pasienId, data, inputterUserId) => {
     ...record,
     is_emergency,
     klasifikasi: label,
-    // TD-03: Flag untuk trigger notifikasi di controller
     perlu_notifikasi: is_emergency,
   };
 };

@@ -3,11 +3,20 @@ const router = express.Router();
 const jadwalController = require("./jadwal-kontrol.controller");
 const authMiddleware = require("../../middlewares/auth.middleware");
 const roleMiddleware = require("../../middlewares/role.middleware");
-const validate = require('../../middlewares/validate.middleware');
-const { tambahJadwalValidator } = require('../../middlewares/validators/jadwal.validator');
+const validate = require("../../middlewares/validate.middleware");
+const {
+  tambahJadwalValidator,
+} = require("../../middlewares/validators/jadwal.validator");
 
 // Update route yang sudah ada
-router.post('/:pasienId', authMiddleware, roleMiddleware('pasien', 'perawat'), tambahJadwalValidator, validate, jadwalController.tambahJadwal);
+router.post(
+  "/:pasienId",
+  authMiddleware,
+  roleMiddleware("pasien", "perawat"),
+  tambahJadwalValidator,
+  validate,
+  jadwalController.tambahJadwal,
+);
 
 /**
  * @swagger
@@ -118,6 +127,52 @@ router.delete(
   authMiddleware,
   roleMiddleware("pasien", "perawat"),
   jadwalController.deleteJadwal,
+);
+
+/**
+ * @swagger
+ * /api/jadwal-kontrol/{pasienId}/{jadwalId}:
+ *   put:
+ *     summary: Update jadwal kontrol
+ *     tags: [Jadwal Kontrol]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: pasienId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: jadwalId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               tanggal:
+ *                 type: string
+ *                 format: date
+ *               jam:
+ *                 type: string
+ *                 example: "10:00"
+ *               lokasi_faskes:
+ *                 type: string
+ *               nama_dokter:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Jadwal kontrol berhasil diupdate
+ */
+router.put(
+  "/:pasienId/:jadwalId",
+  authMiddleware,
+  roleMiddleware("pasien", "perawat"),
+  jadwalController.updateJadwal,
 );
 
 module.exports = router;

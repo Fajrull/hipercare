@@ -480,4 +480,78 @@ router.get(
   obatController.getGrafikKepatuhan,
 );
 
+/**
+ * @swagger
+ * /api/obat/kepatuhan/{pasienId}/log/{logId}:
+ *   put:
+ *     summary: Update log kepatuhan minum obat
+ *     description: Jika status berubah, stok obat otomatis disesuaikan
+ *     tags: [Obat Pasien]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: pasienId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: logId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [diminum, tidak_diminum]
+ *               alasan:
+ *                 type: string
+ *                 description: Wajib jika status tidak_diminum
+ *     responses:
+ *       200:
+ *         description: Log kepatuhan berhasil diupdate
+ */
+router.put(
+  "/kepatuhan/:pasienId/log/:logId",
+  authMiddleware,
+  roleMiddleware("pasien"),
+  obatController.updateLogKepatuhan,
+);
+
+/**
+ * @swagger
+ * /api/obat/kepatuhan/{pasienId}/log/{logId}:
+ *   delete:
+ *     summary: Hapus log kepatuhan minum obat
+ *     description: Jika log berstatus diminum, stok obat otomatis dikembalikan
+ *     tags: [Obat Pasien]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: pasienId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: logId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Log kepatuhan berhasil dihapus
+ */
+router.delete(
+  "/kepatuhan/:pasienId/log/:logId",
+  authMiddleware,
+  roleMiddleware("pasien"),
+  obatController.deleteLogKepatuhan,
+);
+
 module.exports = router;

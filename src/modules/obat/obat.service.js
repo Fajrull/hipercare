@@ -419,6 +419,73 @@ const getGrafikKepatuhan = async (pasienId, filter, startDate, endDate) => {
     grafik,
   };
 };
+const updateLogKepatuhan = async (logId, pasienId, data) => {
+  const log = await prisma.logKepatuhanObat.findFirst({
+    where: { id: parseInt(logId), pasien_id: parseInt(pasienId) },
+  });
+  if (!log) throw new Error("Log kepatuhan tidak ditemukan");
+
+  if (data.status) {
+    const validStatus = ["diminum", "tidak_diminum"];
+    if (!validStatus.includes(data.status)) {
+      throw new Error("Status harus diminum atau tidak_diminum");
+    }
+    if (data.status === "tidak_diminum" && !data.alasan) {
+      throw new Error("Alasan wajib diisi jika status tidak_diminum");
+    }
+  }
+
+  const skor = data.status ? (data.status === "diminum" ? 1 : 0) : log.skor;
+
+  return await prisma.$transaction(async (tx) => {
+    // Jika status berubah, adjust stok obat
+    if (data.status && data.status !== log.status) {
+      if (data.status === "diminum" && log.status === "tidak_diminum") {
+        // Berubah jadi diminum → potong stok
+        await tx.obatPasien.update({
+          where: { id: log.obat_pasien_id },
+          data: { jumlah_stok: { decrement: 1 } },
+        });
+      } else if (data.status === "tidak_diminum" && log.status === "diminum") {
+        // Berubah jadi tidak diminum → kembalikan stok
+        await tx.obatPasien.update({
+          where: { id: log.obat_pasien_id },
+          data: { jumlah_stok: { increment: 1 } },
+        });
+      }
+    }
+
+    return await tx.logKepatuhanObat.update({
+      where: { id: parseInt(logId) },
+      data: {
+        status: data.status,
+        alasan: data.status === "tidak_diminum" ? data.alasan : null,
+        skor,
+      },
+    });
+  });
+};
+
+const deleteLogKepatuhan = async (logId, pasienId) => {
+  const log = await prisma.logKepatuhanObat.findFirst({
+    where: { id: parseInt(logId), pasien_id: parseInt(pasienId) },
+  });
+  if (!log) throw new Error("Log kepatuhan tidak ditemukan");
+
+  await prisma.$transaction(async (tx) => {
+    // Kembalikan stok jika log yang dihapus berstatus diminum
+    if (log.status === "diminum") {
+      await tx.obatPasien.update({
+        where: { id: log.obat_pasien_id },
+        data: { jumlah_stok: { increment: 1 } },
+      });
+    }
+
+    await tx.logKepatuhanObat.delete({ where: { id: parseInt(logId) } });
+  });
+
+  return true;
+};
 
 module.exports = {
   getAllMasterObat,
@@ -434,4 +501,6 @@ module.exports = {
   getObatBelumDikonfirmasi,
   getRiwayatKepatuhan,
   getGrafikKepatuhan,
+  updateLogKepatuhan,
+  deleteLogKepatuhan,
 };
