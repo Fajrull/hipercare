@@ -48,8 +48,10 @@ const updateKeluarga = async (req, res) => {
     const data = await pasienService.updateKeluarga(
       req.params.keluargaId,
       req.body,
+      req.user.id,     
+      req.user.role     
     );
-    return success(res, data, "Data keluarga berhasil diupdate");
+    return success(res, data, 'Data keluarga berhasil diupdate');
   } catch (err) {
     return error(res, err.message, 400);
   }

@@ -102,13 +102,12 @@ const getPasienById = async (pasienId) => {
   const pasien = await prisma.pasien.findUnique({
     where: { id: parseInt(pasienId) },
     include: {
-      user: {
-        select: { id: true, username: true, role: true, device_id: true },
-      },
+      user: { select: { id: true, username: true, role: true, device_id: true } },
       keluarga: {
         include: {
           user: { select: { id: true, username: true } },
         },
+        // plain_password sudah include otomatis karena ada di model
       },
       perawat_pasien: {
         include: {
@@ -118,7 +117,7 @@ const getPasienById = async (pasienId) => {
     },
   });
 
-  if (!pasien) throw new Error("Pasien tidak ditemukan");
+  if (!pasien) throw new Error('Pasien tidak ditemukan');
   return pasien;
 };
 
@@ -187,21 +186,17 @@ const updatePasien = async (pasienId, data) => {
 const registrasiKeluarga = async (pasienId, data, requesterUserId) => {
   const { nama, hubungan, pendidikan, pekerjaan, umur } = data;
 
-  // Pastikan pasien yang request adalah pasien yang bersangkutan
-  const pasien = await prisma.pasien.findUnique({
-    where: { id: parseInt(pasienId) },
-  });
-  if (!pasien) throw new Error("Pasien tidak ditemukan");
-  if (pasien.user_id !== requesterUserId) throw new Error("Akses ditolak");
+  const pasien = await prisma.pasien.findUnique({ where: { id: parseInt(pasienId) } });
+  if (!pasien) throw new Error('Pasien tidak ditemukan');
+  if (pasien.user_id !== requesterUserId) throw new Error('Akses ditolak');
 
-  // Auto-generate username & password untuk keluarga
   const username = generateUsername(nama);
   const plainPassword = generatePassword();
   const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
   const result = await prisma.$transaction(async (tx) => {
     const user = await tx.users.create({
-      data: { username, password: hashedPassword, role: "keluarga" },
+      data: { username, password: hashedPassword, role: 'keluarga' },
     });
 
     const keluarga = await tx.keluarga.create({
@@ -213,6 +208,7 @@ const registrasiKeluarga = async (pasienId, data, requesterUserId) => {
         pendidikan,
         pekerjaan,
         umur,
+        plain_password: plainPassword, // simpan plain password
       },
     });
 
@@ -224,27 +220,56 @@ const registrasiKeluarga = async (pasienId, data, requesterUserId) => {
     nama,
     hubungan,
     username,
-    // Kembalikan plain password agar bisa diberikan ke anggota keluarga
     password: plainPassword,
   };
 };
 
 // Update & Delete Keluarga
-const updateKeluarga = async (keluargaId, data) => {
+const updateKeluarga = async (keluargaId, data, requesterUserId, requesterRole) => {
   const keluarga = await prisma.keluarga.findUnique({
     where: { id: parseInt(keluargaId) },
   });
-  if (!keluarga) throw new Error("Data keluarga tidak ditemukan");
+  if (!keluarga) throw new Error('Data keluarga tidak ditemukan');
 
-  return await prisma.keluarga.update({
-    where: { id: parseInt(keluargaId) },
-    data: {
-      nama: data.nama,
-      hubungan: data.hubungan,
-      pendidikan: data.pendidikan,
-      pekerjaan: data.pekerjaan,
-      umur: data.umur,
-    },
+  // Jika role keluarga, pastikan hanya bisa update data dirinya sendiri
+  if (requesterRole === 'keluarga' && keluarga.user_id !== requesterUserId) {
+    throw new Error('Akses ditolak');
+  }
+
+  return await prisma.$transaction(async (tx) => {
+    // Update data keluarga
+    const updatedKeluarga = await tx.keluarga.update({
+      where: { id: parseInt(keluargaId) },
+      data: {
+        nama: data.nama,
+        hubungan: data.hubungan,
+        pendidikan: data.pendidikan,
+        pekerjaan: data.pekerjaan,
+        umur: data.umur,
+      },
+    });
+
+    // Update password jika disertakan
+    if (data.password) {
+      if (data.password.length < 6) {
+        throw new Error('Password minimal 6 karakter');
+      }
+      const hashedPassword = await bcrypt.hash(data.password, 10);
+
+      // Update hashed password di tabel users
+      await tx.users.update({
+        where: { id: keluarga.user_id },
+        data: { password: hashedPassword },
+      });
+
+      // Sync plain_password di tabel keluarga
+      await tx.keluarga.update({
+        where: { id: parseInt(keluargaId) },
+        data: { plain_password: data.password },
+      });
+    }
+
+    return updatedKeluarga;
   });
 };
 

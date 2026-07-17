@@ -1713,7 +1713,7 @@
           "header": [{ "key": "Content-Type", "value": "application/json" }],
           "body": {
             "mode": "raw",
-            "raw": "{\n  \"nama\": \"Siti Rahayu Updated\",\n  \"hubungan\": \"Istri\",\n  \"pendidikan\": \"S1\",\n  \"pekerjaan\": \"Guru\",\n  \"umur\": 48\n}"
+            "raw": "{\n  \"nama\": \"Siti Rahayu Updated\",\n  \"hubungan\": \"Istri\",\n  \"pendidikan\": \"S1\",\n  \"pekerjaan\": \"Guru\",\n  \"umur\": 48,\n  \"password\": \"newpassword1\"\n}"
           },
           "url": {
             "raw": "{{base_url}}/api/keluarga/profil",

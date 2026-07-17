@@ -72,6 +72,7 @@ model Keluarga {
   pendidikan String?
   pekerjaan  String?
   umur       Int?
+  plain_password String?
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
