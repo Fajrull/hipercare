@@ -125,9 +125,12 @@ const getObatBelumDikonfirmasi = async (req, res) => {
 // OBAT-09: Riwayat Kepatuhan
 const getRiwayatKepatuhan = async (req, res) => {
   try {
+    const { filter, start_date, end_date } = req.query;
     const data = await obatService.getRiwayatKepatuhan(
       req.params.pasienId,
-      req.query.filter,
+      filter,
+      start_date,
+      end_date,
     );
     return success(res, data, "Riwayat kepatuhan berhasil diambil");
   } catch (err) {
@@ -138,9 +141,12 @@ const getRiwayatKepatuhan = async (req, res) => {
 // OBAT-10: Grafik Kepatuhan
 const getGrafikKepatuhan = async (req, res) => {
   try {
+    const { filter, start_date, end_date } = req.query;
     const data = await obatService.getGrafikKepatuhan(
       req.params.pasienId,
-      req.query.filter,
+      filter,
+      start_date,
+      end_date,
     );
     return success(res, data, "Grafik kepatuhan berhasil diambil");
   } catch (err) {

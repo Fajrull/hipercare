@@ -324,61 +324,65 @@ const getObatBelumDikonfirmasi = async (pasienId) => {
 // =============================================
 // OBAT-09: Riwayat Kepatuhan
 // =============================================
-const getRiwayatKepatuhan = async (pasienId, filter) => {
-  const sekarang = new Date();
-  let startDate;
+const getRiwayatKepatuhan = async (pasienId, filter, startDate, endDate) => {
+  let dari, sampai;
 
-  if (filter === "mingguan") {
-    startDate = new Date(sekarang);
-    startDate.setDate(startDate.getDate() - 7);
+  if (startDate && endDate) {
+    dari = new Date(startDate);
+    sampai = new Date(endDate);
+    sampai.setHours(23, 59, 59, 999);
+  } else if (filter === "mingguan") {
+    dari = new Date();
+    dari.setDate(dari.getDate() - 7);
+    sampai = new Date();
   } else if (filter === "bulanan") {
-    startDate = new Date(sekarang);
-    startDate.setMonth(startDate.getMonth() - 1);
+    dari = new Date();
+    dari.setMonth(dari.getMonth() - 1);
+    sampai = new Date();
   }
 
   const where = {
     pasien_id: parseInt(pasienId),
-    ...(startDate && { tanggal: { gte: startDate } }),
+    ...(dari && sampai && { tanggal: { gte: dari, lte: sampai } }),
   };
 
-  const logs = await prisma.logKepatuhanObat.findMany({
+  return await prisma.logKepatuhanObat.findMany({
     where,
     include: {
       obat_pasien: { include: { master_obat: true } },
     },
     orderBy: [{ tanggal: "desc" }, { kategori_waktu: "asc" }],
   });
-
-  return logs;
 };
 
 // =============================================
 // OBAT-10: Grafik Kepatuhan
 // =============================================
-const getGrafikKepatuhan = async (pasienId, filter = "mingguan") => {
-  const sekarang = new Date();
-  let startDate;
-  let groupFormat;
+const getGrafikKepatuhan = async (pasienId, filter, startDate, endDate) => {
+  let dari, sampai;
 
-  if (filter === "mingguan") {
-    startDate = new Date(sekarang);
-    startDate.setDate(startDate.getDate() - 7);
-    groupFormat = "hari";
+  if (startDate && endDate) {
+    dari = new Date(startDate);
+    sampai = new Date(endDate);
+    sampai.setHours(23, 59, 59, 999);
+  } else if (filter === "bulanan") {
+    dari = new Date();
+    dari.setMonth(dari.getMonth() - 1);
+    sampai = new Date();
   } else {
-    startDate = new Date(sekarang);
-    startDate.setMonth(startDate.getMonth() - 1);
-    groupFormat = "minggu";
+    dari = new Date();
+    dari.setDate(dari.getDate() - 7);
+    sampai = new Date();
   }
 
   const logs = await prisma.logKepatuhanObat.findMany({
     where: {
       pasien_id: parseInt(pasienId),
-      tanggal: { gte: startDate },
+      tanggal: { gte: dari, lte: sampai },
     },
     orderBy: { tanggal: "asc" },
   });
 
-  // Group by tanggal
   const grouped = {};
   for (const log of logs) {
     const key = log.tanggal.toISOString().split("T")[0];
@@ -390,22 +394,20 @@ const getGrafikKepatuhan = async (pasienId, filter = "mingguan") => {
     else grouped[key].tidak_patuh += 1;
   }
 
-  // Hitung persentase kepatuhan per hari
   const grafik = Object.values(grouped).map((item) => ({
     ...item,
     persentase_kepatuhan:
       item.total > 0 ? Math.round((item.patuh / item.total) * 100) : 0,
   }));
 
-  // Summary keseluruhan
   const totalLog = logs.length;
   const totalPatuh = logs.filter((l) => l.skor === 1).length;
 
   return {
-    filter,
+    filter: startDate && endDate ? "custom" : filter,
     periode: {
-      dari: startDate.toISOString().split("T")[0],
-      sampai: sekarang.toISOString().split("T")[0],
+      dari: dari.toISOString().split("T")[0],
+      sampai: sampai.toISOString().split("T")[0],
     },
     summary: {
       total_konfirmasi: totalLog,
