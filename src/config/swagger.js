@@ -59,6 +59,7 @@ const options = {
       { name: 'Notifikasi', description: 'Push notification & riwayat notifikasi' },
       { name: 'Badge', description: 'Badge motivasi pasien' },
       { name: 'Laporan', description: 'Ekspor laporan PDF' },
+      { name: 'Keluarga', description: 'Manajemen profil keluarga' },
     ],
   },
   apis: ['./src/modules/**/*.route.js'],

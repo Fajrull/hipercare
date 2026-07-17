@@ -8,14 +8,14 @@ require("dotenv").config();
 
 
 const app = express();
-const { globalLimiter } = require('./middlewares/rate-limit.middleware');
-const { loginLimiter } = require('./middlewares/rate-limit.middleware');
+// const { globalLimiter } = require('./middlewares/rate-limit.middleware');
+// const { loginLimiter } = require('./middlewares/rate-limit.middleware');
 
 // Tambahkan setelah helmet & cors
-app.use(globalLimiter);
+// app.use(globalLimiter);
 
 // Login route pakai limiter khusus
-app.use('/api/auth/login', loginLimiter);
+// app.use('/api/auth/login', loginLimiter);
 
 
 // =============================================
@@ -59,6 +59,7 @@ app.use("/api/edukasi", require("./modules/edukasi/edukasi.route"));
 app.use("/api/notifikasi", require("./modules/notifikasi/notifikasi.route"));
 app.use("/api/badge", require("./modules/badge/badge.route"));
 app.use('/api/laporan', require('./modules/laporan/laporan.route'));
+app.use('/api/keluarga', require('./modules/keluarga/keluarga.route'));
 
 // =============================================
 // Health Check
