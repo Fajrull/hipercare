@@ -68,7 +68,7 @@ model Keluarga {
   user_id    Int      @unique
   pasien_id  Int
   nama       String
-  hubungan   String? // Suami, Istri, Anak, Lainnya
+  hubungan   String? // Suami, Istri, Anak, Ibu, Bapak, Lainnya
   pendidikan String?
   pekerjaan  String?
   umur       Int?

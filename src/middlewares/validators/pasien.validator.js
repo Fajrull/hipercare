@@ -26,8 +26,15 @@ const registrasiKeluargaValidator = [
     .trim(),
   body('hubungan')
     .notEmpty().withMessage('Hubungan wajib diisi')
-    .isIn(['Suami', 'Istri', 'Anak', 'Lainnya'])
-    .withMessage('Hubungan harus Suami, Istri, Anak, atau Lainnya'),
+    .trim()
+    // Capitalize huruf pertama, sisanya lowercase
+    // "IBU" → "Ibu", "ibu" → "Ibu"
+    .customSanitizer((value) => {
+      if (!value) return value;
+      return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+    })
+    .isIn(['Suami', 'Istri', 'Anak', 'Ibu', 'Bapak', 'Lainnya'])
+    .withMessage('Hubungan harus Suami, Istri, Anak, Ibu, Bapak, atau Lainnya'),
   body('umur')
     .optional()
     .isInt({ min: 1, max: 120 }).withMessage('Umur tidak valid'),
