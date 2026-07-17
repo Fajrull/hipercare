@@ -43,6 +43,7 @@ const tambahJadwal = async (pasienId, data) => {
       tanggal: new Date(tanggal),
       jam: jadwalDatetime,
       lokasi_faskes,
+      alamat_faskes: data.alamat_faskes,
       nama_dokter,
     },
   });
@@ -190,6 +191,7 @@ const updateJadwal = async (jadwalId, pasienId, data) => {
       tanggal: tanggal ? new Date(tanggal) : undefined,
       jam: jam || undefined,
       lokasi_faskes,
+      alamat_faskes: data.alamat_faskes,
       nama_dokter,
     },
   });

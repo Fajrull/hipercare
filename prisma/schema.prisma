@@ -190,6 +190,7 @@ model JadwalKontrol {
   tanggal       DateTime @db.Date
   jam           DateTime @db.Time
   lokasi_faskes String?
+  alamat_faskes String?
   nama_dokter   String?
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
