@@ -102,7 +102,9 @@ const getPasienById = async (pasienId) => {
   const pasien = await prisma.pasien.findUnique({
     where: { id: parseInt(pasienId) },
     include: {
-      user: { select: { id: true, username: true, role: true, device_id: true } },
+      user: {
+        select: { id: true, username: true, role: true, device_id: true },
+      },
       keluarga: {
         include: {
           user: { select: { id: true, username: true } },
@@ -117,7 +119,7 @@ const getPasienById = async (pasienId) => {
     },
   });
 
-  if (!pasien) throw new Error('Pasien tidak ditemukan');
+  if (!pasien) throw new Error("Pasien tidak ditemukan");
   return pasien;
 };
 
@@ -186,9 +188,11 @@ const updatePasien = async (pasienId, data) => {
 const registrasiKeluarga = async (pasienId, data, requesterUserId) => {
   const { nama, hubungan, pendidikan, pekerjaan, umur } = data;
 
-  const pasien = await prisma.pasien.findUnique({ where: { id: parseInt(pasienId) } });
-  if (!pasien) throw new Error('Pasien tidak ditemukan');
-  if (pasien.user_id !== requesterUserId) throw new Error('Akses ditolak');
+  const pasien = await prisma.pasien.findUnique({
+    where: { id: parseInt(pasienId) },
+  });
+  if (!pasien) throw new Error("Pasien tidak ditemukan");
+  if (pasien.user_id !== requesterUserId) throw new Error("Akses ditolak");
 
   const username = generateUsername(nama);
   const plainPassword = generatePassword();
@@ -196,7 +200,7 @@ const registrasiKeluarga = async (pasienId, data, requesterUserId) => {
 
   const result = await prisma.$transaction(async (tx) => {
     const user = await tx.users.create({
-      data: { username, password: hashedPassword, role: 'keluarga' },
+      data: { username, password: hashedPassword, role: "keluarga" },
     });
 
     const keluarga = await tx.keluarga.create({
@@ -225,15 +229,20 @@ const registrasiKeluarga = async (pasienId, data, requesterUserId) => {
 };
 
 // Update & Delete Keluarga
-const updateKeluarga = async (keluargaId, data, requesterUserId, requesterRole) => {
+const updateKeluarga = async (
+  keluargaId,
+  data,
+  requesterUserId,
+  requesterRole,
+) => {
   const keluarga = await prisma.keluarga.findUnique({
     where: { id: parseInt(keluargaId) },
   });
-  if (!keluarga) throw new Error('Data keluarga tidak ditemukan');
+  if (!keluarga) throw new Error("Data keluarga tidak ditemukan");
 
   // Jika role keluarga, pastikan hanya bisa update data dirinya sendiri
-  if (requesterRole === 'keluarga' && keluarga.user_id !== requesterUserId) {
-    throw new Error('Akses ditolak');
+  if (requesterRole === "keluarga" && keluarga.user_id !== requesterUserId) {
+    throw new Error("Akses ditolak");
   }
 
   return await prisma.$transaction(async (tx) => {
@@ -252,7 +261,7 @@ const updateKeluarga = async (keluargaId, data, requesterUserId, requesterRole) 
     // Update password jika disertakan
     if (data.password) {
       if (data.password.length < 6) {
-        throw new Error('Password minimal 6 karakter');
+        throw new Error("Password minimal 6 karakter");
       }
       const hashedPassword = await bcrypt.hash(data.password, 10);
 
@@ -277,7 +286,7 @@ const deleteKeluarga = async (keluargaId) => {
   const keluarga = await prisma.keluarga.findUnique({
     where: { id: parseInt(keluargaId) },
   });
-  if (!keluarga) throw new Error('Data keluarga tidak ditemukan');
+  if (!keluarga) throw new Error("Data keluarga tidak ditemukan");
 
   await prisma.$transaction(async (tx) => {
     // 1. Hapus notifikasi milik user keluarga
@@ -304,6 +313,30 @@ const deleteKeluarga = async (keluargaId) => {
   return true;
 };
 
+const getPasienByPerawatId = async (perawatId) => {
+  const perawat = await prisma.perawat.findUnique({
+    where: { id: parseInt(perawatId) },
+  });
+  if (!perawat) throw new Error("Perawat tidak ditemukan");
+
+  const relations = await prisma.perawatPasien.findMany({
+    where: { perawat_id: parseInt(perawatId) },
+    include: {
+      pasien: {
+        include: {
+          user: { select: { id: true, username: true } },
+          tekanan_darah: {
+            orderBy: { tanggal: "desc" },
+            take: 1,
+          },
+        },
+      },
+    },
+  });
+
+  return relations.map((r) => r.pasien);
+};
+
 module.exports = {
   registrasiPasien,
   getPasienById,
@@ -312,4 +345,5 @@ module.exports = {
   registrasiKeluarga,
   updateKeluarga,
   deleteKeluarga,
+  getPasienByPerawatId,
 };
