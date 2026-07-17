@@ -3,6 +3,11 @@ const router = express.Router();
 const keluhanController = require("./keluhan.controller");
 const authMiddleware = require("../../middlewares/auth.middleware");
 const roleMiddleware = require("../../middlewares/role.middleware");
+const validate = require('../../middlewares/validate.middleware');
+const { inputKeluhanValidator } = require('../../middlewares/validators/keluhan.validator');
+
+// Update route yang sudah ada
+router.post('/:pasienId', authMiddleware, roleMiddleware('pasien', 'keluarga', 'perawat'), inputKeluhanValidator, validate, keluhanController.inputKeluhan);
 
 /**
  * @swagger

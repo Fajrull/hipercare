@@ -1,7 +1,16 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const authController = require("./auth.controller");
-const authMiddleware = require("../../middlewares/auth.middleware");
+const authController = require('./auth.controller');
+const authMiddleware = require('../../middlewares/auth.middleware');
+const validate = require('../../middlewares/validate.middleware');
+const { loginValidator, updateDeviceValidator } = require('../../middlewares/validators/auth.validator');
+
+router.post('/login', loginValidator, validate, authController.login);
+router.get('/me', authMiddleware, authController.me);
+router.patch('/update-device', authMiddleware, updateDeviceValidator, validate, authController.updateDeviceId);
+router.post('/logout', authMiddleware, authController.logout);
+
+module.exports = router;
 
 /**
  * @swagger

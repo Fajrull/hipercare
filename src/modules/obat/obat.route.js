@@ -3,6 +3,17 @@ const router = express.Router();
 const obatController = require("./obat.controller");
 const authMiddleware = require("../../middlewares/auth.middleware");
 const roleMiddleware = require("../../middlewares/role.middleware");
+const validate = require('../../middlewares/validate.middleware');
+const {
+  tambahObatPasienValidator,
+  konfirmasiMinumValidator,
+  masterObatValidator,
+} = require('../../middlewares/validators/obat.validator');
+
+// Update route yang sudah ada
+router.post('/master', authMiddleware, roleMiddleware('admin', 'perawat'), masterObatValidator, validate, obatController.createMasterObat);
+router.post('/pasien/:pasienId', authMiddleware, roleMiddleware('pasien'), tambahObatPasienValidator, validate, obatController.tambahObatPasien);
+router.post('/kepatuhan/:pasienId/konfirmasi', authMiddleware, roleMiddleware('pasien'), konfirmasiMinumValidator, validate, obatController.konfirmasiMinum);
 
 // =============================================
 // MASTER OBAT (OBAT-01)

@@ -58,6 +58,7 @@ const options = {
       { name: 'Edukasi', description: 'Materi edukasi FCN' },
       { name: 'Notifikasi', description: 'Push notification & riwayat notifikasi' },
       { name: 'Badge', description: 'Badge motivasi pasien' },
+      { name: 'Laporan', description: 'Ekspor laporan PDF' },
     ],
   },
   apis: ['./src/modules/**/*.route.js'],

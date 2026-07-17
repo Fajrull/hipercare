@@ -3,6 +3,11 @@ const router = express.Router();
 const jadwalController = require("./jadwal-kontrol.controller");
 const authMiddleware = require("../../middlewares/auth.middleware");
 const roleMiddleware = require("../../middlewares/role.middleware");
+const validate = require('../../middlewares/validate.middleware');
+const { tambahJadwalValidator } = require('../../middlewares/validators/jadwal.validator');
+
+// Update route yang sudah ada
+router.post('/:pasienId', authMiddleware, roleMiddleware('pasien', 'perawat'), tambahJadwalValidator, validate, jadwalController.tambahJadwal);
 
 /**
  * @swagger

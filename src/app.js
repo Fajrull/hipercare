@@ -3,14 +3,26 @@ const cors = require("cors");
 const helmet = require("helmet");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./config/swagger");
+const morgan = require('morgan');
 require("dotenv").config();
 
+
 const app = express();
+const { globalLimiter } = require('./middlewares/rate-limit.middleware');
+const { loginLimiter } = require('./middlewares/rate-limit.middleware');
+
+// Tambahkan setelah helmet & cors
+app.use(globalLimiter);
+
+// Login route pakai limiter khusus
+app.use('/api/auth/login', loginLimiter);
+
 
 // =============================================
 // Middlewares Global
 // =============================================
 app.use(helmet({ contentSecurityPolicy: false }));
+app.use(morgan('[:date[iso]] :method :url :status :response-time ms'));
 app.use(cors());
 app.use(express.json());
 
@@ -46,6 +58,7 @@ app.use(
 app.use("/api/edukasi", require("./modules/edukasi/edukasi.route"));
 app.use("/api/notifikasi", require("./modules/notifikasi/notifikasi.route"));
 app.use("/api/badge", require("./modules/badge/badge.route"));
+app.use('/api/laporan', require('./modules/laporan/laporan.route'));
 
 // =============================================
 // Health Check
@@ -73,10 +86,45 @@ app.use((req, res) => {
 // Global Error Handler
 // =============================================
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
+  console.error(`[${new Date().toISOString()}] ERROR:`, err.stack);
+
+  // Handle Prisma errors
+  if (err.code === 'P2002') {
+    return res.status(400).json({
+      status: false,
+      message: 'Data sudah ada (duplicate entry)',
+      data: null,
+    });
+  }
+
+  if (err.code === 'P2025') {
+    return res.status(404).json({
+      status: false,
+      message: 'Data tidak ditemukan',
+      data: null,
+    });
+  }
+
+  // Handle JWT errors
+  if (err.name === 'JsonWebTokenError') {
+    return res.status(401).json({
+      status: false,
+      message: 'Token tidak valid',
+      data: null,
+    });
+  }
+
+  if (err.name === 'TokenExpiredError') {
+    return res.status(401).json({
+      status: false,
+      message: 'Token sudah expired',
+      data: null,
+    });
+  }
+
+  return res.status(500).json({
     status: false,
-    message: "Internal Server Error",
+    message: 'Internal Server Error',
     data: null,
   });
 });

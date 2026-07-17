@@ -3,6 +3,17 @@ const router = express.Router();
 const pasienController = require("./pasien.controller");
 const authMiddleware = require("../../middlewares/auth.middleware");
 const roleMiddleware = require("../../middlewares/role.middleware");
+const validate = require('../../middlewares/validate.middleware');
+const {
+  registrasiPasienValidator,
+  registrasiKeluargaValidator,
+  updatePasienValidator,
+} = require('../../middlewares/validators/pasien.validator');
+
+// Update route yang sudah ada
+router.post('/', authMiddleware, roleMiddleware('perawat'), registrasiPasienValidator, validate, pasienController.registrasiPasien);
+router.put('/:id', authMiddleware, roleMiddleware('admin', 'perawat', 'pasien'), updatePasienValidator, validate, pasienController.updatePasien);
+router.post('/:pasienId/keluarga', authMiddleware, roleMiddleware('pasien'), registrasiKeluargaValidator, validate, pasienController.registrasiKeluarga);
 
 /**
  * @swagger

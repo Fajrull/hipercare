@@ -1422,6 +1422,286 @@
           }
         }
       ]
+    },
+    {
+  "name": "BADGE MOTIVASI",
+  "item": [
+    {
+      "name": "BADGE-02 Get All Badge",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/badge",
+          "host": ["{{base_url}}"],
+          "path": ["api", "badge"]
+        }
+      }
+    },
+    {
+      "name": "BADGE-02 Get Badge Pasien",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/badge/pasien/{{pasien_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "badge", "pasien", "{{pasien_id}}"]
+        },
+        "description": "Cek badge yang layak diterima pasien berdasarkan kepatuhan 7 hari terakhir"
+      }
+    },
+    {
+      "name": "BADGE-02 Get Detail Badge",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/badge/1",
+          "host": ["{{base_url}}"],
+          "path": ["api", "badge", "1"]
+        }
+      }
+    },
+    {
+      "name": "BADGE-01 Create Badge (100%)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"judul\": \"⭐ Pasien Teladan\",\n  \"deskripsi\": \"Berhasil minum obat 100% selama seminggu penuh. Luar biasa!\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/badge",
+          "host": ["{{base_url}}"],
+          "path": ["api", "badge"]
+        },
+        "description": "Login sebagai admin"
+      }
+    },
+    {
+      "name": "BADGE-01 Create Badge (80%)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"judul\": \"👍 Pasien Rajin\",\n  \"deskripsi\": \"Kepatuhan minum obat mencapai 80% minggu ini. Pertahankan!\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/badge",
+          "host": ["{{base_url}}"],
+          "path": ["api", "badge"]
+        }
+      }
+    },
+    {
+      "name": "BADGE-01 Create Badge (50%)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"judul\": \"💪 Terus Semangat\",\n  \"deskripsi\": \"Sudah lebih dari setengah perjalanan. Jangan menyerah!\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/badge",
+          "host": ["{{base_url}}"],
+          "path": ["api", "badge"]
+        }
+      }
+    },
+    {
+      "name": "BADGE-01 Update Badge",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"judul\": \"⭐ Pasien Teladan Updated\",\n  \"deskripsi\": \"Sempurna! Minum obat 100% tanpa terlewat satu pun.\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/badge/1",
+          "host": ["{{base_url}}"],
+          "path": ["api", "badge", "1"]
+        }
+      }
+    },
+    {
+      "name": "BADGE-01 Delete Badge",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/api/badge/1",
+          "host": ["{{base_url}}"],
+          "path": ["api", "badge", "1"]
+        }
+      }
     }
+    ]
+  },
+  {
+  "name": "NOTIFIKASI",
+  "item": [
+    {
+      "name": "NOTIF-08 Get Riwayat Notifikasi",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/notifikasi",
+          "host": ["{{base_url}}"],
+          "path": ["api", "notifikasi"]
+        },
+        "description": "Mengembalikan notifikasi milik user yang sedang login"
+      }
+    },
+    {
+      "name": "NOTIF-09 Tandai Satu Notifikasi Dibaca",
+      "request": {
+        "method": "PATCH",
+        "url": {
+          "raw": "{{base_url}}/api/notifikasi/1/read",
+          "host": ["{{base_url}}"],
+          "path": ["api", "notifikasi", "1", "read"]
+        }
+      }
+    },
+    {
+      "name": "NOTIF-09 Tandai Semua Notifikasi Dibaca",
+      "request": {
+        "method": "PATCH",
+        "url": {
+          "raw": "{{base_url}}/api/notifikasi/read-all",
+          "host": ["{{base_url}}"],
+          "path": ["api", "notifikasi", "read-all"]
+        }
+      }
+    }
+  ]
+},
+{
+  "name": "LAPORAN",
+  "item": [
+    {
+      "name": "LAPORAN-01 Ekspor TD (mingguan)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/laporan/{{pasien_id}}/tekanan-darah?filter=mingguan",
+          "host": ["{{base_url}}"],
+          "path": ["api", "laporan", "{{pasien_id}}", "tekanan-darah"],
+          "query": [{ "key": "filter", "value": "mingguan" }]
+        },
+        "description": "Response berupa file PDF, klik Send & Download di Postman"
+      }
+    },
+    {
+      "name": "LAPORAN-01 Ekspor TD (bulanan)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/laporan/{{pasien_id}}/tekanan-darah?filter=bulanan",
+          "host": ["{{base_url}}"],
+          "path": ["api", "laporan", "{{pasien_id}}", "tekanan-darah"],
+          "query": [{ "key": "filter", "value": "bulanan" }]
+        }
+      }
+    },
+    {
+      "name": "LAPORAN-01 Ekspor TD (custom date)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/laporan/{{pasien_id}}/tekanan-darah?filter=custom&start_date=2026-06-01&end_date=2026-07-07",
+          "host": ["{{base_url}}"],
+          "path": ["api", "laporan", "{{pasien_id}}", "tekanan-darah"],
+          "query": [
+            { "key": "filter", "value": "custom" },
+            { "key": "start_date", "value": "2026-06-01" },
+            { "key": "end_date", "value": "2026-07-07" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "LAPORAN-02 Ekspor Kepatuhan (mingguan)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/laporan/{{pasien_id}}/kepatuhan?filter=mingguan",
+          "host": ["{{base_url}}"],
+          "path": ["api", "laporan", "{{pasien_id}}", "kepatuhan"],
+          "query": [{ "key": "filter", "value": "mingguan" }]
+        }
+      }
+    },
+    {
+      "name": "LAPORAN-02 Ekspor Kepatuhan (bulanan)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/laporan/{{pasien_id}}/kepatuhan?filter=bulanan",
+          "host": ["{{base_url}}"],
+          "path": ["api", "laporan", "{{pasien_id}}", "kepatuhan"],
+          "query": [{ "key": "filter", "value": "bulanan" }]
+        }
+      }
+    },
+    {
+      "name": "LAPORAN-02 Ekspor Kepatuhan (custom date)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/laporan/{{pasien_id}}/kepatuhan?filter=custom&start_date=2026-06-01&end_date=2026-07-07",
+          "host": ["{{base_url}}"],
+          "path": ["api", "laporan", "{{pasien_id}}", "kepatuhan"],
+          "query": [
+            { "key": "filter", "value": "custom" },
+            { "key": "start_date", "value": "2026-06-01" },
+            { "key": "end_date", "value": "2026-07-07" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "LAPORAN-03 Ekspor Lengkap (mingguan)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/laporan/{{pasien_id}}/lengkap?filter=mingguan",
+          "host": ["{{base_url}}"],
+          "path": ["api", "laporan", "{{pasien_id}}", "lengkap"],
+          "query": [{ "key": "filter", "value": "mingguan" }]
+        }
+      }
+    },
+    {
+      "name": "LAPORAN-03 Ekspor Lengkap (bulanan)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/laporan/{{pasien_id}}/lengkap?filter=bulanan",
+          "host": ["{{base_url}}"],
+          "path": ["api", "laporan", "{{pasien_id}}", "lengkap"],
+          "query": [{ "key": "filter", "value": "bulanan" }]
+        }
+      }
+    },
+    {
+      "name": "LAPORAN-03 Ekspor Lengkap (custom date)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/laporan/{{pasien_id}}/lengkap?filter=custom&start_date=2026-06-01&end_date=2026-07-07",
+          "host": ["{{base_url}}"],
+          "path": ["api", "laporan", "{{pasien_id}}", "lengkap"],
+          "query": [
+            { "key": "filter", "value": "custom" },
+            { "key": "start_date", "value": "2026-06-01" },
+            { "key": "end_date", "value": "2026-07-07" }
+          ]
+        }
+      }
+    }
+  ]
+}
   ]
 }
