@@ -87,27 +87,32 @@ const inputTekananDarah = async (
 // =============================================
 // TD-04: Get Riwayat Tekanan Darah
 // =============================================
-const getRiwayatTD = async (pasienId, filter) => {
-  const sekarang = new Date();
-  let startDate;
-
-  if (filter === "mingguan") {
-    startDate = new Date(sekarang);
-    startDate.setDate(startDate.getDate() - 7);
-  } else if (filter === "bulanan") {
-    startDate = new Date(sekarang);
-    startDate.setMonth(startDate.getMonth() - 1);
-  }
-
+const getRiwayatTD = async (pasienId, filter, startDate, endDate) => {
   const pasien = await prisma.pasien.findUnique({
     where: { id: parseInt(pasienId) },
   });
   if (!pasien) throw new Error("Pasien tidak ditemukan");
 
+  let dari, sampai;
+
+  if (startDate && endDate) {
+    dari = new Date(startDate);
+    sampai = new Date(endDate);
+    sampai.setHours(23, 59, 59, 999);
+  } else if (filter === "mingguan") {
+    dari = new Date();
+    dari.setDate(dari.getDate() - 7);
+    sampai = new Date();
+  } else if (filter === "bulanan") {
+    dari = new Date();
+    dari.setMonth(dari.getMonth() - 1);
+    sampai = new Date();
+  }
+
   return await prisma.tekananDarah.findMany({
     where: {
       pasien_id: parseInt(pasienId),
-      ...(startDate && { tanggal: { gte: startDate } }),
+      ...(dari && sampai && { tanggal: { gte: dari, lte: sampai } }),
     },
     include: {
       input_oleh: { select: { id: true, username: true, role: true } },
@@ -119,27 +124,32 @@ const getRiwayatTD = async (pasienId, filter) => {
 // =============================================
 // TD-05: Grafik Tekanan Darah
 // =============================================
-const getGrafikTD = async (pasienId, filter = "mingguan") => {
-  const sekarang = new Date();
-  let startDate;
-
-  if (filter === "mingguan") {
-    startDate = new Date(sekarang);
-    startDate.setDate(startDate.getDate() - 7);
-  } else {
-    startDate = new Date(sekarang);
-    startDate.setMonth(startDate.getMonth() - 1);
-  }
-
+const getGrafikTD = async (pasienId, filter, startDate, endDate) => {
   const pasien = await prisma.pasien.findUnique({
     where: { id: parseInt(pasienId) },
   });
   if (!pasien) throw new Error("Pasien tidak ditemukan");
 
+  let dari, sampai;
+
+  if (startDate && endDate) {
+    dari = new Date(startDate);
+    sampai = new Date(endDate);
+    sampai.setHours(23, 59, 59, 999);
+  } else if (filter === "bulanan") {
+    dari = new Date();
+    dari.setMonth(dari.getMonth() - 1);
+    sampai = new Date();
+  } else {
+    dari = new Date();
+    dari.setDate(dari.getDate() - 7);
+    sampai = new Date();
+  }
+
   const records = await prisma.tekananDarah.findMany({
     where: {
       pasien_id: parseInt(pasienId),
-      tanggal: { gte: startDate },
+      tanggal: { gte: dari, lte: sampai },
     },
     orderBy: { tanggal: "asc" },
     select: {
@@ -149,10 +159,10 @@ const getGrafikTD = async (pasienId, filter = "mingguan") => {
       diastolik: true,
       klasifikasi: true,
       is_emergency: true,
+      input_oleh: { select: { id: true, username: true, role: true } },
     },
   });
 
-  // Hitung summary
   const total = records.length;
   const countPerKlasifikasi = {
     Normal: 0,
@@ -168,21 +178,20 @@ const getGrafikTD = async (pasienId, filter = "mingguan") => {
     }
   }
 
-  // Rata-rata sistolik & diastolik
   const avgSistolik =
     total > 0
-      ? Math.round(records.reduce((sum, r) => sum + r.sistolik, 0) / total)
+      ? Math.round(records.reduce((s, r) => s + r.sistolik, 0) / total)
       : 0;
   const avgDiastolik =
     total > 0
-      ? Math.round(records.reduce((sum, r) => sum + r.diastolik, 0) / total)
+      ? Math.round(records.reduce((s, r) => s + r.diastolik, 0) / total)
       : 0;
 
   return {
-    filter,
+    filter: startDate && endDate ? "custom" : filter || "mingguan",
     periode: {
-      dari: startDate.toISOString().split("T")[0],
-      sampai: sekarang.toISOString().split("T")[0],
+      dari: dari.toISOString().split("T")[0],
+      sampai: sampai.toISOString().split("T")[0],
     },
     summary: {
       total_input: total,

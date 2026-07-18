@@ -3,11 +3,20 @@ const router = express.Router();
 const tdController = require("./tekanan-darah.controller");
 const authMiddleware = require("../../middlewares/auth.middleware");
 const roleMiddleware = require("../../middlewares/role.middleware");
-const validate = require('../../middlewares/validate.middleware');
-const { inputTDValidator } = require('../../middlewares/validators/tekanan-darah.validator');
+const validate = require("../../middlewares/validate.middleware");
+const {
+  inputTDValidator,
+} = require("../../middlewares/validators/tekanan-darah.validator");
 
 // Update route yang sudah ada
-router.post('/:pasienId', authMiddleware, roleMiddleware('pasien', 'perawat'), inputTDValidator, validate, tdController.inputTekananDarah);
+router.post(
+  "/:pasienId",
+  authMiddleware,
+  roleMiddleware("pasien", "perawat"),
+  inputTDValidator,
+  validate,
+  tdController.inputTekananDarah,
+);
 
 /**
  * @swagger
@@ -90,7 +99,19 @@ router.post(
  *         schema:
  *           type: string
  *           enum: [mingguan, bulanan]
- *         description: Filter periode (default semua data)
+ *         description: Filter periode (opsional jika pakai start_date & end_date)
+ *       - in: query
+ *         name: start_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Tanggal mulai (format YYYY-MM-DD)
+ *       - in: query
+ *         name: end_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Tanggal akhir (format YYYY-MM-DD)
  *     responses:
  *       200:
  *         description: Riwayat tekanan darah berhasil diambil
@@ -102,9 +123,6 @@ router.get("/:pasienId", authMiddleware, tdController.getRiwayatTD);
  * /api/tekanan-darah/{pasienId}/grafik:
  *   get:
  *     summary: Data grafik tekanan darah
- *     description: >
- *       Mengembalikan data grafik beserta summary (rata-rata sistolik/diastolik,
- *       distribusi klasifikasi, dan klasifikasi rata-rata keseluruhan).
  *     tags: [Tekanan Darah]
  *     security:
  *       - bearerAuth: []
@@ -119,7 +137,19 @@ router.get("/:pasienId", authMiddleware, tdController.getRiwayatTD);
  *         schema:
  *           type: string
  *           enum: [mingguan, bulanan]
- *         description: Filter periode grafik (default mingguan)
+ *         description: Filter periode (opsional jika pakai start_date & end_date)
+ *       - in: query
+ *         name: start_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Tanggal mulai (format YYYY-MM-DD)
+ *       - in: query
+ *         name: end_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Tanggal akhir (format YYYY-MM-DD)
  *     responses:
  *       200:
  *         description: Data grafik berhasil diambil

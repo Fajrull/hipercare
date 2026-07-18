@@ -63,9 +63,12 @@ const inputTekananDarah = async (req, res) => {
 // TD-04
 const getRiwayatTD = async (req, res) => {
   try {
+    const { filter, start_date, end_date } = req.query;
     const data = await tdService.getRiwayatTD(
       req.params.pasienId,
-      req.query.filter,
+      filter,
+      start_date,
+      end_date,
     );
     return success(res, data, "Riwayat tekanan darah berhasil diambil");
   } catch (err) {
@@ -76,9 +79,12 @@ const getRiwayatTD = async (req, res) => {
 // TD-05
 const getGrafikTD = async (req, res) => {
   try {
+    const { filter, start_date, end_date } = req.query;
     const data = await tdService.getGrafikTD(
       req.params.pasienId,
-      req.query.filter,
+      filter,
+      start_date,
+      end_date,
     );
     return success(res, data, "Grafik tekanan darah berhasil diambil");
   } catch (err) {
