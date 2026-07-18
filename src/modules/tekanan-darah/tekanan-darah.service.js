@@ -20,7 +20,12 @@ const klasifikasiTD = (sistolik, diastolik) => {
 // TD-02: Auto Klasifikasi
 // TD-03: Emergency Warning
 // =============================================
-const inputTekananDarah = async (pasienId, data, inputterUserId) => {
+const inputTekananDarah = async (
+  pasienId,
+  data,
+  inputterUserId,
+  inputterRole,
+) => {
   const { tanggal, sistolik, diastolik } = data;
 
   if (!tanggal || !sistolik || !diastolik) {
@@ -58,11 +63,16 @@ const inputTekananDarah = async (pasienId, data, inputterUserId) => {
   const record = await prisma.tekananDarah.create({
     data: {
       pasien_id: parseInt(pasienId),
+      input_oleh_user_id: inputterUserId,
+      input_oleh_role: inputterRole,
       tanggal: new Date(tanggal),
       sistolik: parseInt(sistolik),
       diastolik: parseInt(diastolik),
       klasifikasi: label,
       is_emergency,
+    },
+    include: {
+      input_oleh: { select: { id: true, username: true, role: true } }, // tambahkan
     },
   });
 
@@ -98,6 +108,9 @@ const getRiwayatTD = async (pasienId, filter) => {
     where: {
       pasien_id: parseInt(pasienId),
       ...(startDate && { tanggal: { gte: startDate } }),
+    },
+    include: {
+      input_oleh: { select: { id: true, username: true, role: true } },
     },
     orderBy: { tanggal: "desc" },
   });
@@ -201,7 +214,6 @@ const updateTekananDarah = async (id, pasienId, data) => {
   if (diastolik < 30 || diastolik > 200)
     throw new Error("Nilai diastolik tidak valid (30-200)");
 
-  // Recalculate klasifikasi setelah update
   const { label, is_emergency } = klasifikasiTD(sistolik, diastolik);
 
   return await prisma.tekananDarah.update({
@@ -212,6 +224,9 @@ const updateTekananDarah = async (id, pasienId, data) => {
       diastolik,
       klasifikasi: label,
       is_emergency,
+    },
+    include: {
+      input_oleh: { select: { id: true, username: true, role: true } },
     },
   });
 };

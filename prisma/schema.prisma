@@ -23,6 +23,7 @@ model Users {
   keluarga   Keluarga?
   notifikasi Notifikasi[]
   keluhan    KeluhanKlinis[] @relation("InputOlehUser")
+  tekanan_darah  TekananDarah[] @relation("InputTD")
 }
 
 model Pasien {
@@ -132,6 +133,8 @@ model LogKepatuhanObat {
 model TekananDarah {
   id           Int      @id @default(autoincrement())
   pasien_id    Int
+  input_oleh_user_id Int?
+  input_oleh_role    String?  // pasien, perawat
   tanggal      DateTime @db.Date
   sistolik     Int
   diastolik    Int
@@ -141,6 +144,7 @@ model TekananDarah {
   updated_at   DateTime @updatedAt
 
   pasien Pasien @relation(fields: [pasien_id], references: [id])
+  input_oleh Users?  @relation("InputTD", fields: [input_oleh_user_id], references: [id])
 }
 
 model MasterDietDash {

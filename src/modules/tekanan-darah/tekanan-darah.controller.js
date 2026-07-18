@@ -10,9 +10,9 @@ const inputTekananDarah = async (req, res) => {
       req.params.pasienId,
       req.body,
       req.user.id,
+      req.user.role,
     );
 
-    // TD-03: Kirim notifikasi darurat ke keluarga & perawat jika emergency
     if (data.perlu_notifikasi) {
       const deviceIds = await tdService.getNotifTargets(req.params.pasienId);
 
@@ -25,7 +25,6 @@ const inputTekananDarah = async (req, res) => {
         );
       }
 
-      // Simpan ke tabel notifikasi untuk semua target
       const pasien = await prisma.pasien.findUnique({
         where: { id: parseInt(req.params.pasienId) },
         include: {
