@@ -8,16 +8,6 @@ const {
   tambahJadwalValidator,
 } = require("../../middlewares/validators/jadwal.validator");
 
-// Update route yang sudah ada
-router.post(
-  "/:pasienId",
-  authMiddleware,
-  roleMiddleware("pasien", "perawat"),
-  tambahJadwalValidator,
-  validate,
-  jadwalController.tambahJadwal,
-);
-
 /**
  * @swagger
  * /api/jadwal-kontrol/{pasienId}:
@@ -94,6 +84,8 @@ router.post(
   "/:pasienId",
   authMiddleware,
   roleMiddleware("pasien", "perawat"),
+  tambahJadwalValidator,
+  validate,
   jadwalController.tambahJadwal,
 );
 

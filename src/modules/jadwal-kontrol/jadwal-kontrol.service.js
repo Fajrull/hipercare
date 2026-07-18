@@ -170,28 +170,37 @@ const getJadwalUntukReminder = async () => {
 };
 
 const updateJadwal = async (jadwalId, pasienId, data) => {
+  console.log("🔍 updateJadwal dipanggil, jam input:", data.jam);
+
   const jadwal = await prisma.jadwalKontrol.findFirst({
     where: { id: parseInt(jadwalId), pasien_id: parseInt(pasienId) },
   });
   if (!jadwal) throw new Error("Jadwal kontrol tidak ditemukan");
 
-  const { tanggal, jam, lokasi_faskes, nama_dokter } = data;
+  const { tanggal, jam, lokasi_faskes, alamat_faskes, nama_dokter } = data;
 
-  if (tanggal && jam) {
-    const jadwalDatetime = new Date(`${tanggal}T${jam}:00`);
-    if (isNaN(jadwalDatetime))
-      throw new Error("Format tanggal atau jam tidak valid");
-    if (jadwalDatetime < new Date())
-      throw new Error("Jadwal kontrol tidak boleh di masa lalu");
-  }
+  const tanggalFinal = tanggal || jadwal.tanggal.toISOString().split("T")[0];
+  const jamFinal = jam || new Date(jadwal.jam).toTimeString().slice(0, 5);
+
+  console.log("🕐 jamFinal:", jamFinal);
+  console.log("📅 tanggalFinal:", tanggalFinal);
+
+  const jadwalDatetime = new Date(`${tanggalFinal}T${jamFinal}:00`);
+
+  console.log("📆 jadwalDatetime:", jadwalDatetime);
+
+  if (isNaN(jadwalDatetime))
+    throw new Error("Format tanggal atau jam tidak valid");
+  if (jadwalDatetime < new Date())
+    throw new Error("Jadwal kontrol tidak boleh di masa lalu");
 
   return await prisma.jadwalKontrol.update({
     where: { id: parseInt(jadwalId) },
     data: {
-      tanggal: tanggal ? new Date(tanggal) : undefined,
-      jam: jam || undefined,
+      tanggal: new Date(tanggalFinal),
+      jam: jadwalDatetime,
       lokasi_faskes,
-      alamat_faskes: data.alamat_faskes,
+      alamat_faskes,
       nama_dokter,
     },
   });
