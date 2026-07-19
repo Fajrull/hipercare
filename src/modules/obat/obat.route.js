@@ -199,7 +199,8 @@ router.get("/pasien/:pasienId", authMiddleware, obatController.getObatPasien);
  *     summary: Tambah obat untuk pasien
  *     description: >
  *       Pasien memilih obat dari master obat kemudian set stok dan jadwal minum.
- *       Obat yang sama tidak bisa didaftarkan 2x untuk waktu yang sama.
+ *       `kategori_waktu` bisa berupa string tunggal atau array untuk multiple waktu sekaligus.
+ *       Contoh single: `"Pagi"`, contoh multiple: `["Pagi", "Malam"]`
  *     tags: [Obat Pasien]
  *     security:
  *       - bearerAuth: []
@@ -227,8 +228,15 @@ router.get("/pasien/:pasienId", authMiddleware, obatController.getObatPasien);
  *                 type: integer
  *                 example: 30
  *               kategori_waktu:
- *                 type: string
- *                 enum: [Pagi, Siang, Malam]
+ *                 oneOf:
+ *                   - type: string
+ *                     enum: [Pagi, Siang, Malam]
+ *                     example: Pagi
+ *                   - type: array
+ *                     items:
+ *                       type: string
+ *                       enum: [Pagi, Siang, Malam]
+ *                     example: ["Pagi", "Malam"]
  *               dosis:
  *                 type: string
  *                 example: 1 tablet
@@ -242,6 +250,8 @@ router.post(
   "/pasien/:pasienId",
   authMiddleware,
   roleMiddleware("pasien"),
+  tambahObatPasienValidator,
+  validate,
   obatController.tambahObatPasien,
 );
 
@@ -250,7 +260,7 @@ router.post(
  * /api/obat/pasien/{pasienId}/{obatId}:
  *   put:
  *     summary: Update obat pasien
- *     description: Edit stok, dosis, atau waktu minum
+ *     description: Edit stok, dosis, atau waktu minum. `kategori_waktu` bisa string atau array.
  *     tags: [Obat Pasien]
  *     security:
  *       - bearerAuth: []
@@ -265,9 +275,33 @@ router.post(
  *         required: true
  *         schema:
  *           type: integer
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               jumlah_stok:
+ *                 type: integer
+ *                 example: 25
+ *               kategori_waktu:
+ *                 oneOf:
+ *                   - type: string
+ *                     enum: [Pagi, Siang, Malam]
+ *                     example: Pagi
+ *                   - type: array
+ *                     items:
+ *                       type: string
+ *                       enum: [Pagi, Siang, Malam]
+ *                     example: ["Pagi", "Malam"]
+ *               dosis:
+ *                 type: string
+ *                 example: 1 tablet
  *     responses:
  *       200:
  *         description: Obat pasien berhasil diupdate
+ *       400:
+ *         description: Validasi gagal
  */
 router.put(
   "/pasien/:pasienId/:obatId",
