@@ -114,7 +114,7 @@ router.get("/:id", authMiddleware, edukasiController.getEdukasiById);
 router.post(
   "/",
   authMiddleware,
-  roleMiddleware("admin"),
+  roleMiddleware("admin", "perawat"),
   edukasiController.createEdukasi,
 );
 
@@ -156,7 +156,7 @@ router.post(
 router.put(
   "/:id",
   authMiddleware,
-  roleMiddleware("admin"),
+  roleMiddleware("admin", "perawat"),
   edukasiController.updateEdukasi,
 );
 
@@ -182,7 +182,7 @@ router.put(
 router.delete(
   "/:id",
   authMiddleware,
-  roleMiddleware("admin"),
+  roleMiddleware("admin", "perawat"),
   edukasiController.deleteEdukasi,
 );
 
