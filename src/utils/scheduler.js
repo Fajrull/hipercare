@@ -1,7 +1,9 @@
-const cron = require('node-cron');
-const prisma = require('../config/database');
-const { sendMulticastNotification, sendNotification } = require('./fcm');
-const { getJadwalUntukReminder } = require('../modules/jadwal-kontrol/jadwal-kontrol.service');
+const cron = require("node-cron");
+const prisma = require("../config/database");
+const { sendMulticastNotification, sendNotification } = require("./fcm");
+const {
+  getJadwalUntukReminder,
+} = require("../modules/jadwal-kontrol/jadwal-kontrol.service");
 
 // =============================================
 // NOTIF-04 & NOTIF-05: Alarm Minum Obat
@@ -11,105 +13,90 @@ const { getJadwalUntukReminder } = require('../modules/jadwal-kontrol/jadwal-kon
 const jalankanAlarmObat = async (kategoriWaktu) => {
   console.log(`🔔 Scheduler: Alarm obat ${kategoriWaktu} dijalankan`);
 
-  // Ambil semua obat pasien sesuai waktu minum
-  const obatList = await prisma.obatPasien.findMany({
-    where: { kategori_waktu: kategoriWaktu },
-    include: {
-      pasien: {
-        include: {
-          user: { select: { id: true, device_id: true } },
-          keluarga: {
-            include: { user: { select: { id: true, device_id: true } } },
+  try {
+    // Filter obat yang kategori_waktu array-nya mengandung kategoriWaktu
+    const obatList = await prisma.obatPasien.findMany({
+      where: {
+        kategori_waktu: { has: kategoriWaktu }, // has = array contains
+      },
+      include: {
+        pasien: {
+          include: {
+            user: { select: { id: true, device_id: true } },
           },
         },
+        master_obat: true,
       },
-      master_obat: true,
-    },
-  });
-
-  if (obatList.length === 0) return;
-
-  const hariIni = new Date();
-  hariIni.setHours(0, 0, 0, 0);
-
-  // OPTIMASI: ambil SEMUA konfirmasi hari ini dalam 1 query (dulu: 1 query per obat / N+1)
-  const obatIds = obatList.map((o) => o.id);
-  const konfirmasiList = await prisma.logKepatuhanObat.findMany({
-    where: {
-      obat_pasien_id: { in: obatIds },
-      tanggal: hariIni,
-      kategori_waktu: kategoriWaktu,
-      status: { in: ['diminum', 'tidak_diminum'] },
-    },
-    select: { obat_pasien_id: true },
-  });
-  const sudahKonfirmasiSet = new Set(konfirmasiList.map((k) => k.obat_pasien_id));
-
-  // Kumpulkan record notifikasi untuk di-insert sekaligus di akhir (dulu: create() satu-satu)
-  const notifikasiBatch = [];
-  const fcmPromises = [];
-
-  for (const obat of obatList) {
-    // NOTIF-05: Skip jika sudah dikonfirmasi hari ini
-    if (sudahKonfirmasiSet.has(obat.id)) continue;
-
-    const pasienDeviceId = obat.pasien.user.device_id;
-    const judulNotif = `💊 Waktunya Minum Obat ${kategoriWaktu}`;
-    const pesanNotif = `Jangan lupa minum ${obat.master_obat.nama_obat} ${obat.dosis || ''}`;
-
-    // Kirim ke pasien
-    if (pasienDeviceId) {
-      fcmPromises.push(
-        sendNotification(
-          pasienDeviceId,
-          judulNotif,
-          pesanNotif,
-          { tipe: 'alarm_obat', obat_pasien_id: String(obat.id), kategori_waktu: kategoriWaktu }
-        )
-      );
-    }
-
-    // Simpan alarm obat ke DB (batch)
-    notifikasiBatch.push({
-      user_id: obat.pasien.user.id,
-      judul: judulNotif,
-      pesan: pesanNotif,
-      tipe: 'alarm_obat',
     });
 
-    // NOTIF-03: Cek stok menipis sekalian
-    if (obat.jumlah_stok <= 3 && obat.jumlah_stok > 0) {
-      const stokPesan = `Stok ${obat.master_obat.nama_obat} tinggal ${obat.jumlah_stok} tablet. Segera tebus resep!`;
+    const hariIni = new Date();
+    hariIni.setHours(0, 0, 0, 0);
 
-      if (pasienDeviceId) {
-        fcmPromises.push(
-          sendNotification(
-            pasienDeviceId,
-            '⚠️ Stok Obat Menipis',
-            stokPesan,
-            { tipe: 'stok_menipis', obat_pasien_id: String(obat.id) }
-          )
+    for (const obat of obatList) {
+      try {
+        const sudahKonfirmasi = await prisma.logKepatuhanObat.findFirst({
+          where: {
+            obat_pasien_id: obat.id,
+            tanggal: hariIni,
+            kategori_waktu: kategoriWaktu,
+            status: { in: ["diminum", "tidak_diminum"] },
+          },
+        });
+
+        if (sudahKonfirmasi) continue;
+
+        const pasienDeviceId = obat.pasien.user.device_id;
+        const judulNotif = `💊 Waktunya Minum Obat ${kategoriWaktu}`;
+        const pesanNotif = `Jangan lupa minum ${obat.master_obat.nama_obat} ${obat.dosis || ""}`;
+
+        if (pasienDeviceId) {
+          await sendNotification(pasienDeviceId, judulNotif, pesanNotif, {
+            tipe: "alarm_obat",
+            obat_pasien_id: String(obat.id),
+            kategori_waktu: kategoriWaktu,
+          });
+        }
+
+        if (obat.jumlah_stok <= 3 && obat.jumlah_stok > 0) {
+          const stokPesan = `Stok ${obat.master_obat.nama_obat} tinggal ${obat.jumlah_stok} tablet. Segera tebus resep!`;
+
+          if (pasienDeviceId) {
+            await sendNotification(
+              pasienDeviceId,
+              "⚠️ Stok Obat Menipis",
+              stokPesan,
+              { tipe: "stok_menipis", obat_pasien_id: String(obat.id) },
+            );
+          }
+
+          await prisma.notifikasi.create({
+            data: {
+              user_id: obat.pasien.user.id,
+              judul: "⚠️ Stok Obat Menipis",
+              pesan: stokPesan,
+              tipe: "stok_menipis",
+            },
+          });
+        }
+
+        await prisma.notifikasi.create({
+          data: {
+            user_id: obat.pasien.user.id,
+            judul: judulNotif,
+            pesan: pesanNotif,
+            tipe: "alarm_obat",
+          },
+        });
+      } catch (innerErr) {
+        console.error(
+          `❌ Scheduler: Error proses obat ID ${obat.id}:`,
+          innerErr.message,
         );
+        continue;
       }
-
-      // Simpan notifikasi stok menipis ke DB (batch)
-      notifikasiBatch.push({
-        user_id: obat.pasien.user.id,
-        judul: '⚠️ Stok Obat Menipis',
-        pesan: stokPesan,
-        tipe: 'stok_menipis',
-      });
     }
-  }
-
-  // Kirim semua FCM secara paralel (dulu: sequential await per obat)
-  if (fcmPromises.length > 0) {
-    await Promise.allSettled(fcmPromises);
-  }
-
-  // Simpan semua notifikasi dalam 1 query batch (dulu: N/2N query create() terpisah)
-  if (notifikasiBatch.length > 0) {
-    await prisma.notifikasi.createMany({ data: notifikasiBatch });
+  } catch (err) {
+    console.error(`❌ Scheduler: Error alarm ${kategoriWaktu}:`, err.message);
   }
 };
 
@@ -118,7 +105,7 @@ const jalankanAlarmObat = async (kategoriWaktu) => {
 // Jadwal: setiap hari pukul 07:00
 // =============================================
 const jalankanReminderKontrol = async () => {
-  console.log('📅 Scheduler: Reminder jadwal kontrol dijalankan');
+  console.log("📅 Scheduler: Reminder jadwal kontrol dijalankan");
 
   const jadwalList = await getJadwalUntukReminder();
   if (jadwalList.length === 0) return;
@@ -129,16 +116,19 @@ const jalankanReminderKontrol = async () => {
   for (const jadwal of jadwalList) {
     const selisih = jadwal.selisih_hari;
     let labelHari;
-    if (selisih === 0) labelHari = 'hari ini';
-    else if (selisih === 1) labelHari = 'besok (H-1)';
+    if (selisih === 0) labelHari = "hari ini";
+    else if (selisih === 1) labelHari = "besok (H-1)";
     else labelHari = `${selisih} hari lagi (H-${selisih})`;
 
-    const judul = '📅 Pengingat Jadwal Kontrol';
-    const pesan = `Jadwal kontrol ${labelHari} pukul ${new Date(jadwal.jam).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}${jadwal.lokasi_faskes ? ` di ${jadwal.lokasi_faskes}` : ''}`;
+    const judul = "📅 Pengingat Jadwal Kontrol";
+    const pesan = `Jadwal kontrol ${labelHari} pukul ${new Date(jadwal.jam).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}${jadwal.lokasi_faskes ? ` di ${jadwal.lokasi_faskes}` : ""}`;
 
     // Kumpulkan semua target notifikasi (pasien + keluarga)
     const targets = [
-      { user_id: jadwal.pasien.user.id, device_id: jadwal.pasien.user.device_id },
+      {
+        user_id: jadwal.pasien.user.id,
+        device_id: jadwal.pasien.user.device_id,
+      },
       ...jadwal.pasien.keluarga.map((k) => ({
         user_id: k.user.id,
         device_id: k.user.device_id,
@@ -150,12 +140,10 @@ const jalankanReminderKontrol = async () => {
     // Kirim FCM (dikumpulkan, dijalankan paralel di luar loop)
     if (deviceIds.length > 0) {
       fcmPromises.push(
-        sendMulticastNotification(
-          deviceIds,
-          judul,
-          pesan,
-          { tipe: 'pengingat_kontrol', jadwal_id: String(jadwal.id) }
-        )
+        sendMulticastNotification(deviceIds, judul, pesan, {
+          tipe: "pengingat_kontrol",
+          jadwal_id: String(jadwal.id),
+        }),
       );
     }
 
@@ -165,7 +153,7 @@ const jalankanReminderKontrol = async () => {
         user_id: t.user_id,
         judul,
         pesan,
-        tipe: 'pengingat_kontrol',
+        tipe: "pengingat_kontrol",
       });
     }
   }
@@ -189,34 +177,46 @@ const jalankanReminderKontrol = async () => {
 // =============================================
 const initScheduler = () => {
   // NOTIF-04: Alarm obat pertama kali di jam minum
-  cron.schedule('0 6 * * *', () => jalankanAlarmObat('Pagi'), {
-    timezone: 'Asia/Jakarta',
+  cron.schedule("0 6 * * *", () => jalankanAlarmObat("Pagi"), {
+    timezone: "Asia/Jakarta",
   });
-  cron.schedule('0 12 * * *', () => jalankanAlarmObat('Siang'), {
-    timezone: 'Asia/Jakarta',
+  cron.schedule("0 12 * * *", () => jalankanAlarmObat("Siang"), {
+    timezone: "Asia/Jakarta",
   });
-  cron.schedule('0 18 * * *', () => jalankanAlarmObat('Malam'), {
-    timezone: 'Asia/Jakarta',
+  cron.schedule("0 18 * * *", () => jalankanAlarmObat("Malam"), {
+    timezone: "Asia/Jakarta",
   });
 
   // NOTIF-05: Repeat alarm setiap 5 menit jika belum dikonfirmasi
   // Pagi: 06:05 - 07:00 | Siang: 12:05 - 13:00 | Malam: 18:05 - 19:00
-  cron.schedule('5,10,15,20,25,30,35,40,45,50,55 6 * * *', () => jalankanAlarmObat('Pagi'), {
-    timezone: 'Asia/Jakarta',
-  });
-  cron.schedule('5,10,15,20,25,30,35,40,45,50,55 12 * * *', () => jalankanAlarmObat('Siang'), {
-    timezone: 'Asia/Jakarta',
-  });
-  cron.schedule('5,10,15,20,25,30,35,40,45,50,55 18 * * *', () => jalankanAlarmObat('Malam'), {
-    timezone: 'Asia/Jakarta',
-  });
+  cron.schedule(
+    "5,10,15,20,25,30,35,40,45,50,55 6 * * *",
+    () => jalankanAlarmObat("Pagi"),
+    {
+      timezone: "Asia/Jakarta",
+    },
+  );
+  cron.schedule(
+    "5,10,15,20,25,30,35,40,45,50,55 12 * * *",
+    () => jalankanAlarmObat("Siang"),
+    {
+      timezone: "Asia/Jakarta",
+    },
+  );
+  cron.schedule(
+    "5,10,15,20,25,30,35,40,45,50,55 18 * * *",
+    () => jalankanAlarmObat("Malam"),
+    {
+      timezone: "Asia/Jakarta",
+    },
+  );
 
   // NOTIF-06: Reminder jadwal kontrol setiap hari jam 07:00
-  cron.schedule('0 7 * * *', () => jalankanReminderKontrol(), {
-    timezone: 'Asia/Jakarta',
+  cron.schedule("0 7 * * *", () => jalankanReminderKontrol(), {
+    timezone: "Asia/Jakarta",
   });
 
-  console.log('✅ Scheduler aktif: alarm obat & reminder kontrol');
+  console.log("✅ Scheduler aktif: alarm obat & reminder kontrol");
 };
 
 module.exports = { initScheduler };

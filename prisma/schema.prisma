@@ -105,7 +105,7 @@ model ObatPasien {
   pasien_id      Int
   master_obat_id Int
   jumlah_stok    Int
-  kategori_waktu String // Pagi, Siang, Malam
+  kategori_waktu String[] // Pagi, Siang, Malam
   dosis          String?
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt

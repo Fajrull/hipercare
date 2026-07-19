@@ -20,10 +20,7 @@ const getMasterObatById = async (id) => {
 const createMasterObat = async (data) => {
   const { nama_obat, dosis } = data;
   if (!nama_obat) throw new Error("Nama obat wajib diisi");
-
-  return await prisma.masterObat.create({
-    data: { nama_obat, dosis },
-  });
+  return await prisma.masterObat.create({ data: { nama_obat, dosis } });
 };
 
 const updateMasterObat = async (id, data) => {
@@ -31,7 +28,6 @@ const updateMasterObat = async (id, data) => {
     where: { id: parseInt(id) },
   });
   if (!obat) throw new Error("Master obat tidak ditemukan");
-
   return await prisma.masterObat.update({
     where: { id: parseInt(id) },
     data: { nama_obat: data.nama_obat, dosis: data.dosis },
@@ -43,8 +39,6 @@ const deleteMasterObat = async (id) => {
     where: { id: parseInt(id) },
   });
   if (!obat) throw new Error("Master obat tidak ditemukan");
-
-  // Cek apakah masih dipakai oleh pasien
   const dipakai = await prisma.obatPasien.findFirst({
     where: { master_obat_id: parseInt(id) },
   });
@@ -52,7 +46,6 @@ const deleteMasterObat = async (id) => {
     throw new Error(
       "Obat tidak dapat dihapus karena masih digunakan oleh pasien",
     );
-
   await prisma.masterObat.delete({ where: { id: parseInt(id) } });
   return true;
 };
@@ -69,41 +62,51 @@ const tambahObatPasien = async (pasienId, data) => {
     );
   }
 
+  // Support single string atau array
+  const waktuList = Array.isArray(kategori_waktu)
+    ? kategori_waktu
+    : [kategori_waktu];
+
   const validWaktu = ["Pagi", "Siang", "Malam"];
-  if (!validWaktu.includes(kategori_waktu)) {
-    throw new Error("kategori_waktu harus Pagi, Siang, atau Malam");
+  for (const waktu of waktuList) {
+    if (!validWaktu.includes(waktu)) {
+      throw new Error(
+        `kategori_waktu "${waktu}" tidak valid. Harus Pagi, Siang, atau Malam`,
+      );
+    }
   }
 
-  // Cek master obat ada
+  // Cek duplikat dalam input
+  const uniqueWaktu = [...new Set(waktuList)];
+  if (uniqueWaktu.length !== waktuList.length) {
+    throw new Error("Terdapat duplikat kategori_waktu dalam input");
+  }
+
   const masterObat = await prisma.masterObat.findUnique({
     where: { id: parseInt(master_obat_id) },
   });
   if (!masterObat) throw new Error("Master obat tidak ditemukan");
 
-  // Cek pasien ada
   const pasien = await prisma.pasien.findUnique({
     where: { id: parseInt(pasienId) },
   });
   if (!pasien) throw new Error("Pasien tidak ditemukan");
 
-  // Cek apakah obat + waktu yang sama sudah ada untuk pasien ini
+  // Cek apakah obat yang sama sudah ada untuk pasien ini
   const existing = await prisma.obatPasien.findFirst({
     where: {
       pasien_id: parseInt(pasienId),
       master_obat_id: parseInt(master_obat_id),
-      kategori_waktu,
     },
   });
-  if (existing) {
-    throw new Error(`Obat ini sudah terdaftar untuk jadwal ${kategori_waktu}`);
-  }
+  if (existing) throw new Error("Obat ini sudah terdaftar untuk pasien ini");
 
   return await prisma.obatPasien.create({
     data: {
       pasien_id: parseInt(pasienId),
       master_obat_id: parseInt(master_obat_id),
       jumlah_stok: parseInt(jumlah_stok),
-      kategori_waktu,
+      kategori_waktu: uniqueWaktu, // simpan sebagai array
       dosis,
     },
     include: { master_obat: true },
@@ -117,10 +120,9 @@ const getObatPasien = async (pasienId) => {
   const obatList = await prisma.obatPasien.findMany({
     where: { pasien_id: parseInt(pasienId) },
     include: { master_obat: true },
-    orderBy: [{ kategori_waktu: "asc" }, { created_at: "desc" }],
+    orderBy: { created_at: "desc" },
   });
 
-  // OBAT-11: Tandai stok menipis (H-3 = stok <= 3)
   return obatList.map((obat) => ({
     ...obat,
     stok_menipis: obat.jumlah_stok <= 3,
@@ -136,36 +138,39 @@ const updateObatPasien = async (obatPasienId, pasienId, data) => {
   });
   if (!obat) throw new Error("Data obat pasien tidak ditemukan");
 
-  const { jumlah_stok, kategori_waktu, dosis } = data;
-
-  if (kategori_waktu) {
+  if (data.kategori_waktu) {
+    const waktuList = Array.isArray(data.kategori_waktu)
+      ? data.kategori_waktu
+      : [data.kategori_waktu];
     const validWaktu = ["Pagi", "Siang", "Malam"];
-    if (!validWaktu.includes(kategori_waktu)) {
-      throw new Error("kategori_waktu harus Pagi, Siang, atau Malam");
+    for (const waktu of waktuList) {
+      if (!validWaktu.includes(waktu)) {
+        throw new Error(`kategori_waktu "${waktu}" tidak valid`);
+      }
     }
+    data.kategori_waktu = [...new Set(waktuList)];
   }
 
   return await prisma.obatPasien.update({
     where: { id: parseInt(obatPasienId) },
     data: {
       jumlah_stok:
-        jumlah_stok !== undefined ? parseInt(jumlah_stok) : undefined,
-      kategori_waktu,
-      dosis,
+        data.jumlah_stok !== undefined ? parseInt(data.jumlah_stok) : undefined,
+      kategori_waktu: data.kategori_waktu,
+      dosis: data.dosis,
     },
     include: { master_obat: true },
   });
 };
 
 // =============================================
-// OBAT-05: Hapus Obat Pasien (Soft Delete via flag)
+// OBAT-05: Hapus Obat Pasien
 // =============================================
 const deleteObatPasien = async (obatPasienId, pasienId) => {
   const obat = await prisma.obatPasien.findFirst({
     where: { id: parseInt(obatPasienId), pasien_id: parseInt(pasienId) },
   });
   if (!obat) throw new Error("Data obat pasien tidak ditemukan");
-
   await prisma.obatPasien.delete({ where: { id: parseInt(obatPasienId) } });
   return true;
 };
@@ -187,22 +192,25 @@ const konfirmasiMinum = async (pasienId, data) => {
     throw new Error("Status harus diminum atau tidak_diminum");
   }
 
-  // OBAT-07: Validasi alasan jika tidak diminum
   if (status === "tidak_diminum" && !alasan) {
     throw new Error("Alasan wajib diisi jika obat tidak diminum");
   }
 
-  // Cek obat pasien valid
+  // Cek obat pasien valid dan kategori_waktu ada di array
   const obatPasien = await prisma.obatPasien.findFirst({
     where: {
       id: parseInt(obat_pasien_id),
       pasien_id: parseInt(pasienId),
-      kategori_waktu,
     },
   });
   if (!obatPasien) throw new Error("Data obat pasien tidak ditemukan");
 
-  // Cek apakah sudah pernah konfirmasi di tanggal & waktu yang sama
+  // Validasi kategori_waktu ada di array obat pasien
+  if (!obatPasien.kategori_waktu.includes(kategori_waktu)) {
+    throw new Error(`Obat ini tidak dijadwalkan untuk waktu ${kategori_waktu}`);
+  }
+
+  // Cek apakah sudah pernah konfirmasi
   const existingLog = await prisma.logKepatuhanObat.findFirst({
     where: {
       obat_pasien_id: parseInt(obat_pasien_id),
@@ -220,7 +228,6 @@ const konfirmasiMinum = async (pasienId, data) => {
   const skor = status === "diminum" ? 1 : 0;
 
   const result = await prisma.$transaction(async (tx) => {
-    // Simpan log kepatuhan
     const log = await tx.logKepatuhanObat.create({
       data: {
         obat_pasien_id: parseInt(obat_pasien_id),
@@ -233,7 +240,6 @@ const konfirmasiMinum = async (pasienId, data) => {
       },
     });
 
-    // OBAT-06: Potong stok jika diminum
     if (status === "diminum") {
       await tx.obatPasien.update({
         where: { id: parseInt(obat_pasien_id) },
@@ -244,7 +250,6 @@ const konfirmasiMinum = async (pasienId, data) => {
     return log;
   });
 
-  // OBAT-11: Cek stok setelah dikurangi, return warning jika menipis
   const updatedObat = await prisma.obatPasien.findUnique({
     where: { id: parseInt(obat_pasien_id) },
     include: { master_obat: true },
@@ -260,44 +265,37 @@ const konfirmasiMinum = async (pasienId, data) => {
 
 // =============================================
 // OBAT-08: Logika Obat Belum Dikonfirmasi
-// Ambil obat yang belum dikonfirmasi dari sesi sebelumnya
 // =============================================
 const getObatBelumDikonfirmasi = async (pasienId) => {
   const sekarang = new Date();
   const hariIni = new Date(sekarang.toDateString());
 
-  // Tentukan sesi sebelumnya berdasarkan jam sekarang
-  // Pagi: 06.00-11.59 | Siang: 12.00-17.59 | Malam: 18.00-05.59
   const jam = sekarang.getHours();
   let sesiLalu = [];
 
   if (jam >= 6 && jam < 12) {
-    // Sesi pagi → cek sesi malam kemarin yang belum dikonfirmasi
     const kemarin = new Date(hariIni);
     kemarin.setDate(kemarin.getDate() - 1);
     sesiLalu = [{ tanggal: kemarin, kategori_waktu: "Malam" }];
   } else if (jam >= 12 && jam < 18) {
-    // Sesi siang → cek sesi pagi hari ini
     sesiLalu = [{ tanggal: hariIni, kategori_waktu: "Pagi" }];
   } else {
-    // Sesi malam → cek sesi siang hari ini
     sesiLalu = [{ tanggal: hariIni, kategori_waktu: "Siang" }];
   }
 
   const belumDikonfirmasi = [];
 
   for (const sesi of sesiLalu) {
-    // Cari obat yang seharusnya diminum di sesi ini
+    // Cari obat yang kategori_waktu array-nya mengandung sesi.kategori_waktu
     const obatSesi = await prisma.obatPasien.findMany({
       where: {
         pasien_id: parseInt(pasienId),
-        kategori_waktu: sesi.kategori_waktu,
+        kategori_waktu: { has: sesi.kategori_waktu }, // filter array contains
       },
       include: { master_obat: true },
     });
 
     for (const obat of obatSesi) {
-      // Cek apakah sudah ada log konfirmasi
       const sudahKonfirmasi = await prisma.logKepatuhanObat.findFirst({
         where: {
           obat_pasien_id: obat.id,
@@ -341,13 +339,11 @@ const getRiwayatKepatuhan = async (pasienId, filter, startDate, endDate) => {
     sampai = new Date();
   }
 
-  const where = {
-    pasien_id: parseInt(pasienId),
-    ...(dari && sampai && { tanggal: { gte: dari, lte: sampai } }),
-  };
-
   return await prisma.logKepatuhanObat.findMany({
-    where,
+    where: {
+      pasien_id: parseInt(pasienId),
+      ...(dari && sampai && { tanggal: { gte: dari, lte: sampai } }),
+    },
     include: {
       obat_pasien: { include: { master_obat: true } },
     },
@@ -419,6 +415,10 @@ const getGrafikKepatuhan = async (pasienId, filter, startDate, endDate) => {
     grafik,
   };
 };
+
+// =============================================
+// OBAT-11: Update & Delete Log Kepatuhan
+// =============================================
 const updateLogKepatuhan = async (logId, pasienId, data) => {
   const log = await prisma.logKepatuhanObat.findFirst({
     where: { id: parseInt(logId), pasien_id: parseInt(pasienId) },
@@ -438,16 +438,13 @@ const updateLogKepatuhan = async (logId, pasienId, data) => {
   const skor = data.status ? (data.status === "diminum" ? 1 : 0) : log.skor;
 
   return await prisma.$transaction(async (tx) => {
-    // Jika status berubah, adjust stok obat
     if (data.status && data.status !== log.status) {
       if (data.status === "diminum" && log.status === "tidak_diminum") {
-        // Berubah jadi diminum → potong stok
         await tx.obatPasien.update({
           where: { id: log.obat_pasien_id },
           data: { jumlah_stok: { decrement: 1 } },
         });
       } else if (data.status === "tidak_diminum" && log.status === "diminum") {
-        // Berubah jadi tidak diminum → kembalikan stok
         await tx.obatPasien.update({
           where: { id: log.obat_pasien_id },
           data: { jumlah_stok: { increment: 1 } },
@@ -473,14 +470,12 @@ const deleteLogKepatuhan = async (logId, pasienId) => {
   if (!log) throw new Error("Log kepatuhan tidak ditemukan");
 
   await prisma.$transaction(async (tx) => {
-    // Kembalikan stok jika log yang dihapus berstatus diminum
     if (log.status === "diminum") {
       await tx.obatPasien.update({
         where: { id: log.obat_pasien_id },
         data: { jumlah_stok: { increment: 1 } },
       });
     }
-
     await tx.logKepatuhanObat.delete({ where: { id: parseInt(logId) } });
   });
 
