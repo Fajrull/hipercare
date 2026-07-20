@@ -74,35 +74,34 @@ const getRekomendasiMenu = async () => {
 // =============================================
 // DIET-03: Input Log Konsumsi Makanan
 // =============================================
-const inputLogKonsumsi = async (pasienId, data) => {
-  const { master_diet_id, nama_makanan, kategori_makan, foto, tanggal } = data;
+const inputLogKonsumsi = async (pasienId, data, fotoFile) => {
+  const { master_diet_id, nama_makanan, kategori_makan, tanggal } = data;
 
   if (!kategori_makan || !tanggal) {
-    throw new Error("kategori_makan dan tanggal wajib diisi");
+    throw new Error('kategori_makan dan tanggal wajib diisi');
   }
 
-  const validKategori = ["Pagi", "Siang", "Malam"];
+  const validKategori = ['Pagi', 'Siang', 'Malam'];
   if (!validKategori.includes(kategori_makan)) {
-    throw new Error("kategori_makan harus Pagi, Siang, atau Malam");
+    throw new Error('kategori_makan harus Pagi, Siang, atau Malam');
   }
 
-  // Wajib salah satu: dari master atau input manual
   if (!master_diet_id && !nama_makanan) {
-    throw new Error("Isi master_diet_id atau nama_makanan");
+    throw new Error('Isi master_diet_id atau nama_makanan');
   }
 
-  const pasien = await prisma.pasien.findUnique({
-    where: { id: parseInt(pasienId) },
-  });
-  if (!pasien) throw new Error("Pasien tidak ditemukan");
+  const pasien = await prisma.pasien.findUnique({ where: { id: parseInt(pasienId) } });
+  if (!pasien) throw new Error('Pasien tidak ditemukan');
 
-  // Jika dari master, validasi master_diet_id ada
   if (master_diet_id) {
     const masterDiet = await prisma.masterDietDash.findUnique({
       where: { id: parseInt(master_diet_id) },
     });
-    if (!masterDiet) throw new Error("Master diet tidak ditemukan");
+    if (!masterDiet) throw new Error('Master diet tidak ditemukan');
   }
+
+  // Ambil path foto jika ada file yang diupload
+  const fotoPath = fotoFile ? `/uploads/diet/${fotoFile.filename}` : null;
 
   return await prisma.logKonsumsiMakanan.create({
     data: {
@@ -110,12 +109,10 @@ const inputLogKonsumsi = async (pasienId, data) => {
       master_diet_id: master_diet_id ? parseInt(master_diet_id) : null,
       nama_makanan: master_diet_id ? null : nama_makanan,
       kategori_makan,
-      foto,
+      foto: fotoPath,
       tanggal: new Date(tanggal),
     },
-    include: {
-      master_diet: true,
-    },
+    include: { master_diet: true },
   });
 };
 
@@ -162,28 +159,38 @@ const getLogKonsumsi = async (pasienId, tanggal) => {
 // =============================================
 // DIET-05: Update Log Konsumsi
 // =============================================
-const updateLogKonsumsi = async (logId, pasienId, data) => {
+const updateLogKonsumsi = async (logId, pasienId, data, fotoFile) => {
   const log = await prisma.logKonsumsiMakanan.findFirst({
     where: { id: parseInt(logId), pasien_id: parseInt(pasienId) },
   });
-  if (!log) throw new Error("Log konsumsi tidak ditemukan");
+  if (!log) throw new Error('Log konsumsi tidak ditemukan');
 
   if (data.kategori_makan) {
-    const validKategori = ["Pagi", "Siang", "Malam"];
+    const validKategori = ['Pagi', 'Siang', 'Malam'];
     if (!validKategori.includes(data.kategori_makan)) {
-      throw new Error("kategori_makan harus Pagi, Siang, atau Malam");
+      throw new Error('kategori_makan harus Pagi, Siang, atau Malam');
+    }
+  }
+
+  // Ambil path foto baru jika ada
+  const fotoPath = fotoFile ? `/uploads/diet/${fotoFile.filename}` : undefined;
+
+  // Hapus foto lama jika ada foto baru
+  if (fotoFile && log.foto) {
+    const fs = require('fs');
+    const oldPath = log.foto.replace('/uploads/diet/', 'uploads/diet/');
+    if (fs.existsSync(oldPath)) {
+      fs.unlinkSync(oldPath);
     }
   }
 
   return await prisma.logKonsumsiMakanan.update({
     where: { id: parseInt(logId) },
     data: {
-      master_diet_id: data.master_diet_id
-        ? parseInt(data.master_diet_id)
-        : undefined,
+      master_diet_id: data.master_diet_id ? parseInt(data.master_diet_id) : undefined,
       nama_makanan: data.nama_makanan,
       kategori_makan: data.kategori_makan,
-      foto: data.foto,
+      foto: fotoPath,
       tanggal: data.tanggal ? new Date(data.tanggal) : undefined,
     },
     include: { master_diet: true },

@@ -3,6 +3,7 @@ const router = express.Router();
 const dietController = require("./diet-dash.controller");
 const authMiddleware = require("../../middlewares/auth.middleware");
 const roleMiddleware = require("../../middlewares/role.middleware");
+const upload = require('../../utils/upload');
 
 // =============================================
 // MASTER DIET DASH (DIET-01)
@@ -195,7 +196,7 @@ router.get("/log/:pasienId", authMiddleware, dietController.getLogKonsumsi);
  *   post:
  *     summary: Input log konsumsi makanan harian
  *     description: >
- *       Pasien input makanan yang dikonsumsi. Bisa dari master diet atau input manual.
+ *       Pasien input makanan yang dikonsumsi. Support upload foto makanan (multipart/form-data).
  *       Minimal salah satu dari `master_diet_id` atau `nama_makanan` wajib diisi.
  *     tags: [Diet DASH]
  *     security:
@@ -209,7 +210,7 @@ router.get("/log/:pasienId", authMiddleware, dietController.getLogKonsumsi);
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             required:
@@ -222,29 +223,22 @@ router.get("/log/:pasienId", authMiddleware, dietController.getLogKonsumsi);
  *               nama_makanan:
  *                 type: string
  *                 description: Opsional, jika makanan tidak ada di master diet
- *                 example: Tempe Goreng
  *               kategori_makan:
  *                 type: string
  *                 enum: [Pagi, Siang, Malam]
- *               foto:
- *                 type: string
- *                 description: URL foto makanan (opsional)
  *               tanggal:
  *                 type: string
  *                 format: date
- *                 example: "2026-07-05"
+ *                 example: "2026-07-20"
+ *               foto:
+ *                 type: string
+ *                 format: binary
+ *                 description: File foto makanan (jpeg, jpg, png, webp, max 5MB)
  *     responses:
  *       201:
  *         description: Log konsumsi berhasil disimpan
- *       400:
- *         description: Validasi gagal
  */
-router.post(
-  "/log/:pasienId",
-  authMiddleware,
-  roleMiddleware("pasien"),
-  dietController.inputLogKonsumsi,
-);
+router.post('/log/:pasienId', authMiddleware, roleMiddleware('pasien'), upload.single('foto'), dietController.inputLogKonsumsi);
 
 /**
  * @swagger
@@ -265,16 +259,31 @@ router.post(
  *         required: true
  *         schema:
  *           type: integer
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               master_diet_id:
+ *                 type: integer
+ *               nama_makanan:
+ *                 type: string
+ *               kategori_makan:
+ *                 type: string
+ *                 enum: [Pagi, Siang, Malam]
+ *               tanggal:
+ *                 type: string
+ *                 format: date
+ *               foto:
+ *                 type: string
+ *                 format: binary
+ *                 description: File foto makanan baru (opsional, foto lama akan dihapus)
  *     responses:
  *       200:
  *         description: Log konsumsi berhasil diupdate
  */
-router.put(
-  "/log/:pasienId/:logId",
-  authMiddleware,
-  roleMiddleware("pasien"),
-  dietController.updateLogKonsumsi,
-);
+router.put('/log/:pasienId/:logId', authMiddleware, roleMiddleware('pasien'), upload.single('foto'), dietController.updateLogKonsumsi);
 
 /**
  * @swagger

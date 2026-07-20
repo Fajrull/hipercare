@@ -63,8 +63,9 @@ const inputLogKonsumsi = async (req, res) => {
     const data = await dietService.inputLogKonsumsi(
       req.params.pasienId,
       req.body,
+      req.file // file dari multer
     );
-    return success(res, data, "Log konsumsi berhasil disimpan", 201);
+    return success(res, data, 'Log konsumsi berhasil disimpan', 201);
   } catch (err) {
     return error(res, err.message, 400);
   }
@@ -90,8 +91,9 @@ const updateLogKonsumsi = async (req, res) => {
       req.params.logId,
       req.params.pasienId,
       req.body,
+      req.file // file dari multer
     );
-    return success(res, data, "Log konsumsi berhasil diupdate");
+    return success(res, data, 'Log konsumsi berhasil diupdate');
   } catch (err) {
     return error(res, err.message, 400);
   }
