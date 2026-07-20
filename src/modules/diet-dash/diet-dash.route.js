@@ -3,7 +3,7 @@ const router = express.Router();
 const dietController = require("./diet-dash.controller");
 const authMiddleware = require("../../middlewares/auth.middleware");
 const roleMiddleware = require("../../middlewares/role.middleware");
-const upload = require('../../utils/upload');
+const { uploadDiet } = require('../../utils/upload');
 
 // =============================================
 // MASTER DIET DASH (DIET-01)
@@ -238,7 +238,7 @@ router.get("/log/:pasienId", authMiddleware, dietController.getLogKonsumsi);
  *       201:
  *         description: Log konsumsi berhasil disimpan
  */
-router.post('/log/:pasienId', authMiddleware, roleMiddleware('pasien'), upload.single('foto'), dietController.inputLogKonsumsi);
+router.post('/log/:pasienId', authMiddleware, roleMiddleware('pasien'), uploadDiet.single('foto'), dietController.inputLogKonsumsi);
 
 /**
  * @swagger
@@ -283,7 +283,7 @@ router.post('/log/:pasienId', authMiddleware, roleMiddleware('pasien'), upload.s
  *       200:
  *         description: Log konsumsi berhasil diupdate
  */
-router.put('/log/:pasienId/:logId', authMiddleware, roleMiddleware('pasien'), upload.single('foto'), dietController.updateLogKonsumsi);
+router.put('/log/:pasienId/:logId', authMiddleware, roleMiddleware('pasien'), uploadDiet.single('foto'), dietController.updateLogKonsumsi);
 
 /**
  * @swagger

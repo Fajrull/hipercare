@@ -1,4 +1,5 @@
 const prisma = require("../../config/database");
+const { uploadToCloudinary, deleteFile, getPublicIdFromUrl } = require('../../utils/upload');
 
 // =============================================
 // DIET-01: CRUD Master Diet DASH
@@ -100,8 +101,12 @@ const inputLogKonsumsi = async (pasienId, data, fotoFile) => {
     if (!masterDiet) throw new Error('Master diet tidak ditemukan');
   }
 
-  // Ambil path foto jika ada file yang diupload
-  const fotoPath = fotoFile ? `/uploads/diet/${fotoFile.filename}` : null;
+  // Upload foto ke Cloudinary jika ada
+  let fotoUrl = null;
+  if (fotoFile) {
+    const result = await uploadToCloudinary(fotoFile.buffer, 'diet');
+    fotoUrl = result.secure_url;
+  }
 
   return await prisma.logKonsumsiMakanan.create({
     data: {
@@ -109,7 +114,7 @@ const inputLogKonsumsi = async (pasienId, data, fotoFile) => {
       master_diet_id: master_diet_id ? parseInt(master_diet_id) : null,
       nama_makanan: master_diet_id ? null : nama_makanan,
       kategori_makan,
-      foto: fotoPath,
+      foto: fotoUrl,
       tanggal: new Date(tanggal),
     },
     include: { master_diet: true },
@@ -172,16 +177,15 @@ const updateLogKonsumsi = async (logId, pasienId, data, fotoFile) => {
     }
   }
 
-  // Ambil path foto baru jika ada
-  const fotoPath = fotoFile ? `/uploads/diet/${fotoFile.filename}` : undefined;
-
-  // Hapus foto lama jika ada foto baru
-  if (fotoFile && log.foto) {
-    const fs = require('fs');
-    const oldPath = log.foto.replace('/uploads/diet/', 'uploads/diet/');
-    if (fs.existsSync(oldPath)) {
-      fs.unlinkSync(oldPath);
+  // Upload foto baru ke Cloudinary & hapus foto lama
+  let fotoUrl = undefined;
+  if (fotoFile) {
+    if (log.foto) {
+      const publicId = getPublicIdFromUrl(log.foto);
+      if (publicId) await deleteFile(publicId);
     }
+    const result = await uploadToCloudinary(fotoFile.buffer, 'diet');
+    fotoUrl = result.secure_url;
   }
 
   return await prisma.logKonsumsiMakanan.update({
@@ -190,7 +194,7 @@ const updateLogKonsumsi = async (logId, pasienId, data, fotoFile) => {
       master_diet_id: data.master_diet_id ? parseInt(data.master_diet_id) : undefined,
       nama_makanan: data.nama_makanan,
       kategori_makan: data.kategori_makan,
-      foto: fotoPath,
+      foto: fotoUrl,
       tanggal: data.tanggal ? new Date(data.tanggal) : undefined,
     },
     include: { master_diet: true },
