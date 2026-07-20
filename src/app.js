@@ -7,7 +7,6 @@ const morgan = require('morgan');
 require("dotenv").config();
 
 const app = express();
-const path = require('path');
 // const { globalLimiter } = require('./middlewares/rate-limit.middleware');
 // const { loginLimiter } = require('./middlewares/rate-limit.middleware');
 
@@ -25,7 +24,6 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(morgan('[:date[iso]] :method :url :status :response-time ms'));
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // =============================================
 // Swagger Documentation
