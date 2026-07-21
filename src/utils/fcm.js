@@ -51,10 +51,18 @@ const sendNotification = async (deviceId, title, body, data = {}) => {
   if (!deviceId) return null;
 
   try {
-    const response = await admin.messaging().send({
+    // Konversi semua value data ke string
+    const stringData = Object.fromEntries(
+      Object.entries(data).map(([k, v]) => [k, String(v)])
+    );
+
+    const messaging = admin.messaging();
+    if (!messaging) throw new Error('Firebase messaging tidak tersedia');
+
+    const response = await messaging.send({
       token: deviceId,
       notification: { title, body },
-      data,
+      data: stringData,
     });
     console.log('FCM terkirim:', response);
     return response;
@@ -74,10 +82,18 @@ const sendMulticastNotification = async (deviceIds, title, body, data = {}) => {
   if (validDevices.length === 0) return null;
 
   try {
-    const response = await admin.messaging().sendEachForMulticast({
+    // Konversi semua value data ke string
+    const stringData = Object.fromEntries(
+      Object.entries(data).map(([k, v]) => [k, String(v)])
+    );
+
+    const messaging = admin.messaging();
+    if (!messaging) throw new Error('Firebase messaging tidak tersedia');
+
+    const response = await messaging.sendEachForMulticast({
       tokens: validDevices,
       notification: { title, body },
-      data,
+      data: stringData,
     });
     console.log(`FCM: ${response.successCount} berhasil, ${response.failureCount} gagal`);
     return response;
