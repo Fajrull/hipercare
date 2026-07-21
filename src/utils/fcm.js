@@ -5,7 +5,7 @@ let firebaseReady = false;
 try {
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  
+
   // Gunakan base64 jika tersedia, fallback ke raw
   let privateKey;
   if (process.env.FIREBASE_PRIVATE_KEY_BASE64) {
@@ -15,14 +15,6 @@ try {
   }
 
   if (projectId && clientEmail && privateKey) {
-    // Handle berbagai format private key di environment variable
-    privateKey = privateKey.replace(/\\n/g, '\n');
-
-    // Handle jika private key dibungkus tanda kutip
-    if (privateKey.startsWith('"')) {
-      privateKey = privateKey.slice(1, -1);
-    }
-
     if (!admin.apps.length) {
       admin.initializeApp({
         credential: admin.credential.cert({
@@ -38,7 +30,6 @@ try {
     console.warn('⚠️  Firebase env belum dikonfigurasi, push notification dinonaktifkan');
   }
 } catch (err) {
-  // Jangan throw — cukup log agar server tetap jalan
   console.warn('⚠️  Firebase gagal diinisialisasi:', err.message);
   firebaseReady = false;
 }
@@ -51,7 +42,6 @@ const sendNotification = async (deviceId, title, body, data = {}) => {
   if (!deviceId) return null;
 
   try {
-    // Konversi semua value data ke string
     const stringData = Object.fromEntries(
       Object.entries(data).map(([k, v]) => [k, String(v)])
     );
@@ -82,7 +72,6 @@ const sendMulticastNotification = async (deviceIds, title, body, data = {}) => {
   if (validDevices.length === 0) return null;
 
   try {
-    // Konversi semua value data ke string
     const stringData = Object.fromEntries(
       Object.entries(data).map(([k, v]) => [k, String(v)])
     );
